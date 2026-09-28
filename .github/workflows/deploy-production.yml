@@ -9,6 +9,10 @@ env:
   REGISTRY: ghcr.io
   IMAGE_OWNER: ${{ github.repository_owner }}
 
+permissions:
+  contents: read
+  packages: write
+
 jobs:
   # ─────────────────────────────────────────────────────
   # JOB 1: Re-tag image staging → menjadi production tag
