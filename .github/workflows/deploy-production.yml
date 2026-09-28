@@ -92,7 +92,10 @@ jobs:
 
       - name: "⚙️ Setup kubectl"
         run: |
-          echo "${{ secrets.KUBECONFIG_DATA }}" | base64 -d > kubeconfig.yml
+          # Membersihkan karakter aneh/newline dan men-decode base64
+          echo "${{ secrets.KUBECONFIG_DATA }}" | tr -d '\n\r ' | base64 -d > kubeconfig.yml
+          # Mengubah IP 127.0.0.1 bawaan K3s menjadi IP Tailscale server Anda
+          sed -i 's/127.0.0.1/100.79.211.49/g' kubeconfig.yml
           echo "KUBECONFIG=$PWD/kubeconfig.yml" >> $GITHUB_ENV
 
       - name: "🚀 Apply manifest ke namespace production"
