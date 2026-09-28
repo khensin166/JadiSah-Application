@@ -35,6 +35,12 @@ jobs:
           cache: true
           cache-dependency-path: backend/go.sum
 
+      - name: "📦 Download dependensi Go"
+        run: |
+          cd backend
+          go mod download
+          go mod tidy
+
       - name: "🧹 Lint (golangci-lint)"
         uses: golangci/golangci-lint-action@v6
         with:
