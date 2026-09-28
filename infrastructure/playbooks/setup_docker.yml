@@ -1,43 +1,137 @@
 ---
-- name: Setup Docker on Server
-  hosts: all
-  become: yes
-  tasks:
-    - name: Update apt cache
-      apt:
-        update_cache: yes
+# Playbook: Setup Docker CE di Server
+# Jalankan dengan: ansible-playbook -i "IP," setup_docker.yml -u jds --private-key ~/.ssh/jadi_sah.pem -K
+# Tidak menggunakan root langsung — hanya escalate via sudo (become: yes) saat dibutuhkan.
 
+- name: Setup Docker CE
+  hosts: all
+  become: yes  # Escalate ke sudo saat diperlukan, BUKAN login sebagai root
+  vars:
+    docker_user: "{{ ansible_user }}"  # User yang akan ditambahkan ke grup docker (jds)
+
+  tasks:
+    # ─────────────────────────────────────────────
+    # 1. Hapus versi Docker lama jika ada
+    # ─────────────────────────────────────────────
+    - name: Hapus package Docker lama jika ada
+      apt:
+        name:
+          - docker
+          - docker-engine
+          - docker.io
+          - containerd
+          - runc
+          - docker-compose
+        state: absent
+        purge: yes
+      ignore_errors: yes
+
+    # ─────────────────────────────────────────────
+    # 2. Install dependencies
+    # ─────────────────────────────────────────────
     - name: Install dependencies
       apt:
         name:
           - apt-transport-https
           - ca-certificates
           - curl
-          - software-properties-common
+          - gnupg
+          - lsb-release
         state: present
+        update_cache: yes
 
-    - name: Add Docker GPG key
-      apt_key:
-        url: https://download.docker.com/linux/ubuntu/gpg
-        state: present
+    # ─────────────────────────────────────────────
+    # 3. Tambahkan GPG Key & Repository resmi Docker
+    # ─────────────────────────────────────────────
+    - name: Buat direktori keyring
+      file:
+        path: /etc/apt/keyrings
+        state: directory
+        mode: '0755'
 
-    - name: Add Docker APT repository
-      apt_repository:
-        repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu focal stable
-        state: present
+    - name: Download dan simpan Docker GPG key
+      shell: |
+        curl -fsSL https://download.docker.com/linux/ubuntu/gpg | \
+        gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+      args:
+        creates: /etc/apt/keyrings/docker.gpg
 
-    - name: Install Docker
+    - name: Set permission GPG key
+      file:
+        path: /etc/apt/keyrings/docker.gpg
+        mode: '0644'
+
+    - name: Tambahkan repository Docker resmi
+      shell: |
+        echo \
+          "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] \
+          https://download.docker.com/linux/ubuntu \
+          $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
+          tee /etc/apt/sources.list.d/docker.list > /dev/null
+      args:
+        creates: /etc/apt/sources.list.d/docker.list
+
+    # ─────────────────────────────────────────────
+    # 4. Install Docker CE
+    # ─────────────────────────────────────────────
+    - name: Update apt cache setelah tambah repo Docker
       apt:
-        name: docker-ce
-        state: present
+        update_cache: yes
 
-    - name: Install Docker Compose plugin
+    - name: Install Docker CE dan plugin
       apt:
-        name: docker-compose-plugin
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+          - docker-buildx-plugin
+          - docker-compose-plugin
         state: present
 
-    - name: Ensure Docker service is running
+    # ─────────────────────────────────────────────
+    # 5. Enable dan start Docker service
+    # ─────────────────────────────────────────────
+    - name: Enable dan start Docker service
       service:
         name: docker
         state: started
         enabled: yes
+
+    # ─────────────────────────────────────────────
+    # 6. Tambahkan user ke grup docker (KEAMANAN)
+    #    Sehingga user tidak perlu sudo untuk docker
+    # ─────────────────────────────────────────────
+    - name: Tambahkan user '{{ docker_user }}' ke grup docker
+      user:
+        name: "{{ docker_user }}"
+        groups: docker
+        append: yes
+
+    # ─────────────────────────────────────────────
+    # 7. Verifikasi instalasi
+    # ─────────────────────────────────────────────
+    - name: Cek versi Docker
+      command: docker --version
+      register: docker_version
+      changed_when: false
+
+    - name: Cek versi Docker Compose
+      command: docker compose version
+      register: compose_version
+      changed_when: false
+
+    - name: Tampilkan hasil instalasi
+      debug:
+        msg:
+          - "✅ {{ docker_version.stdout }}"
+          - "✅ {{ compose_version.stdout }}"
+          - "✅ User '{{ docker_user }}' sudah ditambahkan ke grup docker"
+          - "ℹ️  Logout dan login kembali ke server agar perubahan grup aktif"
+
+
+# cd /mnt/d/eksplor/JadiSah-Application
+
+#ansible-playbook -i "100.79.211.49," infrastructure/playbooks/setup_docker.yml \
+#  -u jds \
+#  --private-key ~/.ssh/jadi_sah.pem \
+#  -K

@@ -1,0 +1,6 @@
+---
+- name: Prepare Ubuntu for Kubernetes
+  hosts: all
+  become: yes
+  roles:
+    - common

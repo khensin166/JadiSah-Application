@@ -1,0 +1,24 @@
+---
+- name: Cek apakah Tailscale terinstall
+  command: tailscale version
+  register: ts_version
+  ignore_errors: yes
+  changed_when: false
+
+- name: Pastikan Tailscale Service aktif
+  service:
+    name: tailscaled
+    state: started
+    enabled: yes
+  when: ts_version.rc == 0
+
+- name: Validasi koneksi Tailscale
+  command: tailscale status
+  register: ts_status
+  changed_when: false
+  when: ts_version.rc == 0
+
+- name: Tampilkan status Tailscale
+  debug:
+    msg: "Tailscale berjalan normal"
+  when: ts_status is defined and ts_status.rc == 0

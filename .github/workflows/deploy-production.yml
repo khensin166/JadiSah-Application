@@ -1,0 +1,105 @@
+name: "🏆 Deploy Production"
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_OWNER: ${{ github.repository_owner }}
+
+jobs:
+  # ─────────────────────────────────────────────────────
+  # JOB 1: Re-tag image staging → menjadi production tag
+  # TIDAK ADA BUILD ULANG! Mengambil image yang sudah teruji di staging.
+  # ─────────────────────────────────────────────────────
+  retag-images:
+    name: "🏷️ Re-tag Staging Image → Production"
+    runs-on: ubuntu-latest
+    outputs:
+      commit-sha: ${{ steps.get-sha.outputs.sha }}
+
+    steps:
+      - name: "📥 Checkout code"
+        uses: actions/checkout@v4
+
+      - name: "🔍 Ambil SHA commit dari staging"
+        id: get-sha
+        run: |
+          # Ambil SHA dari commit terakhir yang masuk ke branch 'staging' sebelum merge ke main
+          SHA=$(git log --merges --first-parent origin/staging -n 1 --pretty=format:"%H" | cut -c1-7 || echo "")
+          # Fallback ke SHA saat ini jika tidak ada merge
+          if [ -z "$SHA" ]; then
+            SHA=$(echo "${{ github.sha }}" | cut -c1-7)
+          fi
+          echo "sha=$SHA" >> $GITHUB_OUTPUT
+          echo "Menggunakan image dengan SHA: $SHA"
+
+      - name: "🔐 Login ke GitHub Container Registry"
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: "♻️ Re-tag Backend: staging-sha → production"
+        run: |
+          SHA=${{ steps.get-sha.outputs.sha }}
+          docker pull ghcr.io/${{ env.IMAGE_OWNER }}/jadisah-backend:${SHA}
+          docker tag  ghcr.io/${{ env.IMAGE_OWNER }}/jadisah-backend:${SHA} \
+                      ghcr.io/${{ env.IMAGE_OWNER }}/jadisah-backend:production
+          docker tag  ghcr.io/${{ env.IMAGE_OWNER }}/jadisah-backend:${SHA} \
+                      ghcr.io/${{ env.IMAGE_OWNER }}/jadisah-backend:latest
+          docker push ghcr.io/${{ env.IMAGE_OWNER }}/jadisah-backend:production
+          docker push ghcr.io/${{ env.IMAGE_OWNER }}/jadisah-backend:latest
+
+      - name: "♻️ Re-tag Frontend: staging-sha → production"
+        run: |
+          SHA=${{ steps.get-sha.outputs.sha }}
+          docker pull ghcr.io/${{ env.IMAGE_OWNER }}/jadisah-frontend:${SHA}
+          docker tag  ghcr.io/${{ env.IMAGE_OWNER }}/jadisah-frontend:${SHA} \
+                      ghcr.io/${{ env.IMAGE_OWNER }}/jadisah-frontend:production
+          docker tag  ghcr.io/${{ env.IMAGE_OWNER }}/jadisah-frontend:${SHA} \
+                      ghcr.io/${{ env.IMAGE_OWNER }}/jadisah-frontend:latest
+          docker push ghcr.io/${{ env.IMAGE_OWNER }}/jadisah-frontend:production
+          docker push ghcr.io/${{ env.IMAGE_OWNER }}/jadisah-frontend:latest
+
+  # ─────────────────────────────────────────────────────
+  # JOB 2: DEPLOY – Kirim ke Kubernetes namespace production
+  # ─────────────────────────────────────────────────────
+  deploy-production:
+    name: "☸️ Deploy ke Kubernetes (production)"
+    runs-on: ubuntu-latest
+    needs: [retag-images]
+    environment: production  # Bisa ditambahkan "required reviewers" di GitHub untuk approval manual
+
+    steps:
+      - name: "📥 Checkout code"
+        uses: actions/checkout@v4
+
+      - name: "🔗 Koneksi ke Tailscale VPN"
+        uses: tailscale/github-action@v3
+        with:
+          oauth-client-id: ${{ secrets.TAILSCALE_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TAILSCALE_CLIENT_SECRET }}
+          tags: tag:ci
+          version: "1.80.3"
+
+      - name: "⚙️ Setup kubectl"
+        run: |
+          echo "${{ secrets.KUBECONFIG_DATA }}" | base64 -d > kubeconfig.yml
+          echo "KUBECONFIG=$PWD/kubeconfig.yml" >> $GITHUB_ENV
+
+      - name: "🚀 Apply manifest ke namespace production"
+        run: |
+          kubectl apply -f k8s-infra/kubernetes/production/ --namespace=production
+          kubectl set image deployment/backend backend=ghcr.io/${{ env.IMAGE_OWNER }}/jadisah-backend:production -n production
+          kubectl set image deployment/frontend frontend=ghcr.io/${{ env.IMAGE_OWNER }}/jadisah-frontend:production -n production
+          kubectl rollout status deployment/backend -n production --timeout=180s
+          kubectl rollout status deployment/frontend -n production --timeout=180s
+
+      - name: "🎉 Deploy berhasil!"
+        run: |
+          echo "Deployment ke production selesai!"
+          kubectl get pods -n production

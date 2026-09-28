@@ -1,0 +1,43 @@
+---
+- name: Update APT cache
+  apt:
+    update_cache: yes
+    cache_valid_time: 3600
+
+- name: Install Basic Packages
+  apt:
+    name:
+      - curl
+      - wget
+      - git
+      - vim
+      - nano
+      - htop
+      - jq
+      - net-tools
+      - ca-certificates
+      - unzip
+    state: present
+
+- name: Set hostname
+  hostname:
+    name: "{{ inventory_hostname }}"
+
+- name: Update /etc/hosts with new hostname
+  lineinfile:
+    path: /etc/hosts
+    regexp: '^127\.0\.1\.1'
+    line: "127.0.1.1 {{ inventory_hostname }}"
+    state: present
+
+- name: Disable SWAP for Kubernetes
+  command: swapoff -a
+  when: ansible_swaptotal_mb > 0
+
+# Kita biarkan entry di /etc/fstab tetap ada tapi dikomentari, 
+# supaya gampang dihidupkan lagi kalau user mau.
+- name: Disable SWAP in fstab
+  replace:
+    path: /etc/fstab
+    regexp: '^([^#].*?\sswap\s+sw\s+.*)$'
+    replace: '# \1'

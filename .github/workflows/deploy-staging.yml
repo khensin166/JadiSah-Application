@@ -1,0 +1,152 @@
+name: "🚀 Deploy Staging"
+
+on:
+  push:
+    branches:
+      - staging
+      - develop
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_OWNER: ${{ github.repository_owner }}
+
+jobs:
+  # ─────────────────────────────────────────────────────
+  # JOB 1: BACKEND – Lint, Test, Build, Push Image
+  # ─────────────────────────────────────────────────────
+  backend-staging:
+    name: "Backend → Staging"
+    runs-on: ubuntu-latest
+    outputs:
+      image-tag: ${{ steps.meta.outputs.version }}
+
+    steps:
+      - name: "📥 Checkout code"
+        uses: actions/checkout@v4
+
+      - name: "🐹 Setup Go"
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: backend/go.mod
+          cache: true
+          cache-dependency-path: backend/go.sum
+
+      - name: "🧹 Lint (golangci-lint)"
+        uses: golangci/golangci-lint-action@v6
+        with:
+          working-directory: backend
+          version: latest
+
+      - name: "🧪 Unit Test"
+        run: |
+          cd backend
+          go test -v -race -coverprofile=coverage.out ./...
+
+      - name: "🔐 Login ke GitHub Container Registry"
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: "🏷️ Buat metadata image"
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/jadisah-backend
+          tags: |
+            type=sha,prefix=,format=short
+            type=raw,value=staging
+
+      - name: "🏗️ Build & Push Docker Image Backend"
+        uses: docker/build-push-action@v6
+        with:
+          context: ./backend
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+  # ─────────────────────────────────────────────────────
+  # JOB 2: FRONTEND – Lint, Test, Build, Push Image
+  # ─────────────────────────────────────────────────────
+  frontend-staging:
+    name: "Frontend → Staging"
+    runs-on: ubuntu-latest
+    outputs:
+      image-tag: ${{ steps.meta.outputs.version }}
+
+    steps:
+      - name: "📥 Checkout code"
+        uses: actions/checkout@v4
+
+      - name: "🟢 Setup Node.js"
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: "📦 Install dependensi"
+        run: npm ci --prefix frontend
+
+      - name: "🧹 Lint (ESLint)"
+        run: npm run lint --prefix frontend
+
+      - name: "🔐 Login ke GitHub Container Registry"
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: "🏷️ Buat metadata image"
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/jadisah-frontend
+          tags: |
+            type=sha,prefix=,format=short
+            type=raw,value=staging
+
+      - name: "🏗️ Build & Push Docker Image Frontend"
+        uses: docker/build-push-action@v6
+        with:
+          context: ./frontend
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+  # ─────────────────────────────────────────────────────
+  # JOB 3: DEPLOY – Kirim ke Kubernetes namespace staging
+  # ─────────────────────────────────────────────────────
+  deploy-staging:
+    name: "☸️ Deploy ke Kubernetes (staging)"
+    runs-on: ubuntu-latest
+    needs: [backend-staging, frontend-staging]
+    environment: staging
+
+    steps:
+      - name: "📥 Checkout code"
+        uses: actions/checkout@v4
+
+      - name: "🔗 Koneksi ke Tailscale VPN"
+        uses: tailscale/github-action@v3
+        with:
+          oauth-client-id: ${{ secrets.TAILSCALE_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TAILSCALE_CLIENT_SECRET }}
+          tags: tag:ci
+          version: "1.80.3"
+
+      - name: "⚙️ Setup kubectl"
+        run: |
+          echo "${{ secrets.KUBECONFIG_DATA }}" | base64 -d > kubeconfig.yml
+          echo "KUBECONFIG=$PWD/kubeconfig.yml" >> $GITHUB_ENV
+
+      - name: "🚀 Apply manifest ke namespace staging"
+        run: |
+          COMMIT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
+          kubectl apply -f k8s-infra/kubernetes/staging/ --namespace=staging
+          kubectl set image deployment/backend backend=ghcr.io/${{ env.IMAGE_OWNER }}/jadisah-backend:${COMMIT_SHA} -n staging
+          kubectl set image deployment/frontend frontend=ghcr.io/${{ env.IMAGE_OWNER }}/jadisah-frontend:${COMMIT_SHA} -n staging
+          kubectl rollout status deployment/backend -n staging --timeout=120s
+          kubectl rollout status deployment/frontend -n staging --timeout=120s

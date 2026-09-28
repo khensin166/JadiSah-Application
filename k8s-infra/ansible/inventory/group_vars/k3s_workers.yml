@@ -1,0 +1,11 @@
+---
+k3s_version: "v1.30.4+k3s1"
+
+# URL untuk Worker agar join ke Server
+# Nanti k3s_server_ip diambil dari node k3s_servers yang berjalan
+k3s_url: "https://{{ hostvars[groups['k3s_servers'][0]]['k3s_node_ip'] }}:6443"
+
+# Node IP spesifik untuk setiap worker (melewati Tailscale)
+k3s_extra_args: >-
+  --node-ip={{ k3s_node_ip }}
+  --flannel-iface=tailscale0

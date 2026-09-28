@@ -1,0 +1,9 @@
+---
+k3s_version: "v1.30.4+k3s1"
+
+# Ini akan diteruskan ke k3s installation script
+# Kita paksa bind ke IP Tailscale agar komunikasi internal K3s melewati Tailscale
+k3s_extra_args: >-
+  --node-ip={{ k3s_node_ip }}
+  --flannel-iface=tailscale0
+  --write-kubeconfig-mode=644

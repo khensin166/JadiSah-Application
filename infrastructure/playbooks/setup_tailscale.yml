@@ -1,0 +1,33 @@
+---
+- name: Verify Tailscale OAuth Key Connection
+  hosts: all
+  become: yes
+  vars:
+    # Masukkan OAuth Secret (tskey-client-...) Anda di sini via --extra-vars
+    tailscale_auth_key: "" 
+  
+  tasks:
+    - name: Cek apakah Tailscale sudah terinstall di server
+      command: tailscale version
+      register: ts_version
+      changed_when: false
+      failed_when: ts_version.rc != 0
+
+    - name: Tampilkan versi Tailscale
+      debug:
+        msg: "Tailscale ditemukan: {{ ts_version.stdout_lines[0] }}"
+
+    - name: Test Autentikasi Menggunakan OAuth Key
+      command: tailscale up --authkey={{ tailscale_auth_key }} --advertise-tags={{ tailscale_tags | default('tag:server') }} --reset
+      register: tailscale_up_result
+      # Memastikan tidak ada error saat autentikasi
+      failed_when: tailscale_up_result.rc != 0
+      
+    - name: Verifikasi IP Tailscale yang didapat
+      command: tailscale ip -4
+      register: tailscale_ip
+      changed_when: false
+
+    - name: Hasil Test Berhasil
+      debug:
+        msg: "✅ VALID! OAuth Key berfungsi. Server sekarang terhubung ke Tailnet dengan IP: {{ tailscale_ip.stdout }}"
