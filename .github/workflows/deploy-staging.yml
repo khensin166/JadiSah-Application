@@ -39,13 +39,13 @@ jobs:
         run: |
           cd backend
           go mod download
-          go mod tidy
+          go mod verify
 
       - name: "🧹 Lint (golangci-lint)"
-        uses: golangci/golangci-lint-action@v6
-        with:
-          working-directory: backend
-          version: latest
+        run: |
+          go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+          cd backend
+          golangci-lint run ./... --timeout=5m
 
       - name: "🧪 Unit Test"
         run: |
