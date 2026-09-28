@@ -119,7 +119,7 @@ metadata:
 spec:
   ingressClassName: traefik
   rules:
-  - host: jadisah.internal
+  - host: production.100.79.211.49.nip.io
     http:
       paths:
       - path: /
