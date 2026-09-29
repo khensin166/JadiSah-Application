@@ -28,18 +28,6 @@ jobs:
       - name: "📥 Checkout code"
         uses: actions/checkout@v4
 
-      - name: "🔍 Ambil SHA commit dari staging"
-        id: get-sha
-        run: |
-          # Ambil SHA dari commit terakhir yang masuk ke branch 'staging' sebelum merge ke main
-          SHA=$(git log --merges --first-parent origin/staging -n 1 --pretty=format:"%H" | cut -c1-7 || echo "")
-          # Fallback ke SHA saat ini jika tidak ada merge
-          if [ -z "$SHA" ]; then
-            SHA=$(echo "${{ github.sha }}" | cut -c1-7)
-          fi
-          echo "sha=$SHA" >> $GITHUB_OUTPUT
-          echo "Menggunakan image dengan SHA: $SHA"
-
       - name: "🔐 Login ke GitHub Container Registry"
         uses: docker/login-action@v3
         with:
@@ -47,24 +35,22 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: "♻️ Re-tag Backend: staging-sha → production"
+      - name: "♻️ Re-tag Backend: staging → production"
         run: |
-          SHA=${{ steps.get-sha.outputs.sha }}
-          docker pull ghcr.io/${{ env.IMAGE_OWNER }}/jadisah-backend:${SHA}
-          docker tag  ghcr.io/${{ env.IMAGE_OWNER }}/jadisah-backend:${SHA} \
+          docker pull ghcr.io/${{ env.IMAGE_OWNER }}/jadisah-backend:staging
+          docker tag  ghcr.io/${{ env.IMAGE_OWNER }}/jadisah-backend:staging \
                       ghcr.io/${{ env.IMAGE_OWNER }}/jadisah-backend:production
-          docker tag  ghcr.io/${{ env.IMAGE_OWNER }}/jadisah-backend:${SHA} \
+          docker tag  ghcr.io/${{ env.IMAGE_OWNER }}/jadisah-backend:staging \
                       ghcr.io/${{ env.IMAGE_OWNER }}/jadisah-backend:latest
           docker push ghcr.io/${{ env.IMAGE_OWNER }}/jadisah-backend:production
           docker push ghcr.io/${{ env.IMAGE_OWNER }}/jadisah-backend:latest
 
-      - name: "♻️ Re-tag Frontend: staging-sha → production"
+      - name: "♻️ Re-tag Frontend: staging → production"
         run: |
-          SHA=${{ steps.get-sha.outputs.sha }}
-          docker pull ghcr.io/${{ env.IMAGE_OWNER }}/jadisah-frontend:${SHA}
-          docker tag  ghcr.io/${{ env.IMAGE_OWNER }}/jadisah-frontend:${SHA} \
+          docker pull ghcr.io/${{ env.IMAGE_OWNER }}/jadisah-frontend:staging
+          docker tag  ghcr.io/${{ env.IMAGE_OWNER }}/jadisah-frontend:staging \
                       ghcr.io/${{ env.IMAGE_OWNER }}/jadisah-frontend:production
-          docker tag  ghcr.io/${{ env.IMAGE_OWNER }}/jadisah-frontend:${SHA} \
+          docker tag  ghcr.io/${{ env.IMAGE_OWNER }}/jadisah-frontend:staging \
                       ghcr.io/${{ env.IMAGE_OWNER }}/jadisah-frontend:latest
           docker push ghcr.io/${{ env.IMAGE_OWNER }}/jadisah-frontend:production
           docker push ghcr.io/${{ env.IMAGE_OWNER }}/jadisah-frontend:latest
