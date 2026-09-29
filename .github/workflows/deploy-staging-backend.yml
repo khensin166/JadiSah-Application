@@ -1,10 +1,14 @@
-name: "🚀 Deploy Staging"
+name: "🚀 [Staging] Backend – Build & Deploy"
 
 on:
   push:
     branches:
       - staging
       - develop
+    paths:
+      - 'backend/**'
+      - '!backend/docs/**'        # Abaikan perubahan docs backend
+      - 'k8s-infra/kubernetes/staging/backend-deployment.yml'
 
 env:
   REGISTRY: ghcr.io
@@ -19,10 +23,8 @@ jobs:
   # JOB 1: BACKEND – Lint, Test, Build, Push Image
   # ─────────────────────────────────────────────────────
   backend-staging:
-    name: "Backend → Staging"
+    name: "Backend → Build & Push"
     runs-on: ubuntu-latest
-    outputs:
-      image-tag: ${{ steps.meta.outputs.version }}
 
     steps:
       - name: "📥 Checkout code"
@@ -77,62 +79,12 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
 
   # ─────────────────────────────────────────────────────
-  # JOB 2: FRONTEND – Lint, Test, Build, Push Image
+  # JOB 2: DEPLOY – Apply backend ke Kubernetes staging
   # ─────────────────────────────────────────────────────
-  frontend-staging:
-    name: "Frontend → Staging"
+  deploy-backend-staging:
+    name: "☸️ Deploy Backend ke Kubernetes (staging)"
     runs-on: ubuntu-latest
-    outputs:
-      image-tag: ${{ steps.meta.outputs.version }}
-
-    steps:
-      - name: "📥 Checkout code"
-        uses: actions/checkout@v4
-
-      - name: "🟢 Setup Node.js"
-        uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-          cache: "npm"
-          cache-dependency-path: frontend/package-lock.json
-
-      - name: "📦 Install dependensi"
-        run: npm ci --prefix frontend
-
-      - name: "🧹 Lint (ESLint)"
-        run: npm run lint --prefix frontend
-
-      - name: "🔐 Login ke GitHub Container Registry"
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: "🏷️ Buat metadata image"
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/jadisah-frontend
-          tags: |
-            type=sha,prefix=,format=short
-            type=raw,value=staging
-
-      - name: "🏗️ Build & Push Docker Image Frontend"
-        uses: docker/build-push-action@v6
-        with:
-          context: ./frontend
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-
-  # ─────────────────────────────────────────────────────
-  # JOB 3: DEPLOY – Kirim ke Kubernetes namespace staging
-  # ─────────────────────────────────────────────────────
-  deploy-staging:
-    name: "☸️ Deploy ke Kubernetes (staging)"
-    runs-on: ubuntu-latest
-    needs: [backend-staging, frontend-staging]
+    needs: [backend-staging]
     environment: staging
 
     steps:
@@ -149,17 +101,16 @@ jobs:
 
       - name: "⚙️ Setup kubectl"
         run: |
-          # Membersihkan karakter aneh/newline dan men-decode base64
           echo "${{ secrets.KUBECONFIG_DATA }}" | tr -d '\n\r ' | base64 -d > kubeconfig.yml
-          # Mengubah IP 127.0.0.1 bawaan K3s menjadi IP Tailscale server Anda
           sed -i 's/127.0.0.1/100.79.211.49/g' kubeconfig.yml
           echo "KUBECONFIG=$PWD/kubeconfig.yml" >> $GITHUB_ENV
 
-      - name: "🚀 Apply manifest ke namespace staging"
+      - name: "🚀 Apply & Rollout backend ke namespace staging"
         run: |
           COMMIT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
-          kubectl apply -f k8s-infra/kubernetes/staging/ --namespace=staging
+          kubectl apply -f k8s-infra/kubernetes/staging/namespace.yml
+          kubectl apply -f k8s-infra/kubernetes/staging/postgres-deployment.yml
+          kubectl apply -f k8s-infra/kubernetes/staging/ingress.yml
+          kubectl apply -f k8s-infra/kubernetes/staging/backend-deployment.yml
           kubectl set image deployment/backend backend=ghcr.io/${{ env.IMAGE_OWNER }}/jadisah-backend:${COMMIT_SHA} -n staging
-          kubectl set image deployment/frontend frontend=ghcr.io/${{ env.IMAGE_OWNER }}/jadisah-frontend:${COMMIT_SHA} -n staging
           kubectl rollout status deployment/backend -n staging --timeout=120s
-          kubectl rollout status deployment/frontend -n staging --timeout=120s

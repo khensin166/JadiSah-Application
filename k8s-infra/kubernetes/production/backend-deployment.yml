@@ -1,0 +1,60 @@
+# Backend Go (Production)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+  namespace: production
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      containers:
+      - name: backend
+        # Image akan di-update secara otomatis oleh GitHub Actions saat deploy
+        image: ghcr.io/khensin166/jadisah-backend:production
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8080
+        env:
+        - name: DB_HOST
+          # Terhubung ke PostgreSQL utama yang ada di namespace database
+          value: "postgres-service.database.svc.cluster.local"
+        - name: DB_PORT
+          value: "5432"
+        - name: DB_USER
+          value: "jadisah"
+        - name: DB_NAME
+          value: "jadisah_db"
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: production-secret
+              key: POSTGRES_PASSWORD
+        - name: GIN_MODE
+          value: "release"
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "1000m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend-service
+  namespace: production
+spec:
+  type: ClusterIP
+  ports:
+  - port: 80
+    targetPort: 8080
+  selector:
+    app: backend

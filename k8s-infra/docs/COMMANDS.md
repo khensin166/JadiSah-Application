@@ -11,3 +11,6 @@ ANSIBLE_CONFIG=ansible.cfg ansible-playbook playbooks/tailscale.yml -K
 ANSIBLE_CONFIG=ansible.cfg ansible-playbook playbooks/k3s-server.yml -K
 
 #jds BECOME password: S1b3r!@#
+
+# 3. Instalasi K9s
+ANSIBLE_CONFIG=ansible.cfg ansible-playbook playbooks/k9s.yml -K
