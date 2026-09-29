@@ -1,0 +1,38 @@
+---
+- name: Get latest k9s release version
+  uri:
+    url: https://api.github.com/repos/derailed/k9s/releases/latest
+    return_content: yes
+  register: k9s_latest
+
+- name: Cek versi k9s yang terinstall
+  shell: k9s version -s | grep Version | awk '{print $2}' || echo "none"
+  register: k9s_current
+  changed_when: false
+  ignore_errors: true
+
+- name: Download dan Install k9s
+  block:
+    - name: Buat direktori sementara
+      file:
+        path: /tmp/k9s_temp
+        state: directory
+
+    - name: Download & Extract k9s tarball
+      unarchive:
+        src: "https://github.com/derailed/k9s/releases/download/{{ k9s_latest.json.tag_name }}/k9s_Linux_amd64.tar.gz"
+        dest: /tmp/k9s_temp/
+        remote_src: yes
+
+    - name: Pindahkan binari k9s ke /usr/local/bin
+      copy:
+        src: /tmp/k9s_temp/k9s
+        dest: /usr/local/bin/k9s
+        mode: '0755'
+        remote_src: yes
+
+    - name: Hapus direktori sementara
+      file:
+        path: /tmp/k9s_temp
+        state: absent
+  when: k9s_current.stdout != k9s_latest.json.tag_name

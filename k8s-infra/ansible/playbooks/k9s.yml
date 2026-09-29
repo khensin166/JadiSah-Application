@@ -1,0 +1,6 @@
+---
+- name: Install k9s on master node
+  hosts: k3s_servers
+  become: yes
+  roles:
+    - role: ../roles/k9s

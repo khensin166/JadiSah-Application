@@ -1,9 +1,13 @@
-name: "🏆 Deploy Production"
+name: "🏆 [Production] Frontend – Re-tag & Deploy"
 
 on:
   push:
     branches:
       - main
+    paths:
+      - 'frontend/**'
+      - '!frontend/docs/**'       # Abaikan perubahan docs frontend
+      - 'k8s-infra/kubernetes/production/frontend-deployment.yml'
 
 env:
   REGISTRY: ghcr.io
@@ -15,35 +19,20 @@ permissions:
 
 jobs:
   # ─────────────────────────────────────────────────────
-  # JOB 1: Re-tag image staging → menjadi production tag
+  # JOB 1: Re-tag image frontend staging → production tag
   # TIDAK ADA BUILD ULANG! Mengambil image yang sudah teruji di staging.
   # ─────────────────────────────────────────────────────
-  retag-images:
-    name: "🏷️ Re-tag Staging Image → Production"
+  retag-frontend:
+    name: "🏷️ Re-tag Frontend: staging → production"
     runs-on: ubuntu-latest
-    outputs:
-      commit-sha: ${{ steps.get-sha.outputs.sha }}
 
     steps:
-      - name: "📥 Checkout code"
-        uses: actions/checkout@v4
-
       - name: "🔐 Login ke GitHub Container Registry"
         uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: "♻️ Re-tag Backend: staging → production"
-        run: |
-          docker pull ghcr.io/${{ env.IMAGE_OWNER }}/jadisah-backend:staging
-          docker tag  ghcr.io/${{ env.IMAGE_OWNER }}/jadisah-backend:staging \
-                      ghcr.io/${{ env.IMAGE_OWNER }}/jadisah-backend:production
-          docker tag  ghcr.io/${{ env.IMAGE_OWNER }}/jadisah-backend:staging \
-                      ghcr.io/${{ env.IMAGE_OWNER }}/jadisah-backend:latest
-          docker push ghcr.io/${{ env.IMAGE_OWNER }}/jadisah-backend:production
-          docker push ghcr.io/${{ env.IMAGE_OWNER }}/jadisah-backend:latest
 
       - name: "♻️ Re-tag Frontend: staging → production"
         run: |
@@ -56,13 +45,13 @@ jobs:
           docker push ghcr.io/${{ env.IMAGE_OWNER }}/jadisah-frontend:latest
 
   # ─────────────────────────────────────────────────────
-  # JOB 2: DEPLOY – Kirim ke Kubernetes namespace production
+  # JOB 2: DEPLOY – Apply frontend ke Kubernetes production
   # ─────────────────────────────────────────────────────
-  deploy-production:
-    name: "☸️ Deploy ke Kubernetes (production)"
+  deploy-frontend-production:
+    name: "☸️ Deploy Frontend ke Kubernetes (production)"
     runs-on: ubuntu-latest
-    needs: [retag-images]
-    environment: production  # Bisa ditambahkan "required reviewers" di GitHub untuk approval manual
+    needs: [retag-frontend]
+    environment: production
 
     steps:
       - name: "📥 Checkout code"
@@ -78,21 +67,19 @@ jobs:
 
       - name: "⚙️ Setup kubectl"
         run: |
-          # Membersihkan karakter aneh/newline dan men-decode base64
           echo "${{ secrets.KUBECONFIG_DATA }}" | tr -d '\n\r ' | base64 -d > kubeconfig.yml
-          # Mengubah IP 127.0.0.1 bawaan K3s menjadi IP Tailscale server Anda
           sed -i 's/127.0.0.1/100.79.211.49/g' kubeconfig.yml
           echo "KUBECONFIG=$PWD/kubeconfig.yml" >> $GITHUB_ENV
 
-      - name: "🚀 Apply manifest ke namespace production"
+      - name: "🚀 Apply & Rollout frontend ke namespace production"
         run: |
-          kubectl apply -f k8s-infra/kubernetes/production/ --namespace=production
-          kubectl set image deployment/backend backend=ghcr.io/${{ env.IMAGE_OWNER }}/jadisah-backend:production -n production
+          kubectl apply -f k8s-infra/kubernetes/production/namespace.yml
+          kubectl apply -f k8s-infra/kubernetes/production/ingress.yml
+          kubectl apply -f k8s-infra/kubernetes/production/frontend-deployment.yml
           kubectl set image deployment/frontend frontend=ghcr.io/${{ env.IMAGE_OWNER }}/jadisah-frontend:production -n production
-          kubectl rollout status deployment/backend -n production --timeout=180s
           kubectl rollout status deployment/frontend -n production --timeout=180s
 
       - name: "🎉 Deploy berhasil!"
         run: |
-          echo "Deployment ke production selesai!"
-          kubectl get pods -n production
+          echo "Frontend production berhasil di-deploy!"
+          kubectl get pods -n production -l app=frontend

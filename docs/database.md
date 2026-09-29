@@ -1,85 +1,39 @@
-# Database Schema (PostgreSQL)
+# DATABASE.md
 
-This document contains the initial database design for the Wedding Planner application.
+## 1. Tujuan
+File ini menjelaskan bagaimana data distrukturkan, dikelola, dan diakses dengan aman dalam proyek JadiSah.
 
-## Entity Relationship
+## 2. Database Stack
+- **Engine Utama:** PostgreSQL
+- **Environment:** K3s Kubernetes Namespace `database`
+- **Driver/ORM:** (Disepakati kemudian, direkomendasikan GORM atau `pgx` untuk Golang).
 
-### `users`
-- `id` (UUID, PK)
-- `email` (VARCHAR, UNIQUE)
-- `password_hash` (VARCHAR)
-- `full_name` (VARCHAR)
-- `created_at` (TIMESTAMP)
-- `updated_at` (TIMESTAMP)
+## 3. Lingkungan (Environment)
+- Database Staging dan Production berada pada Pod/Instances yang terpisah untuk menjaga isolasi data.
+- Aplikasi Backend terhubung menggunakan DNS Internal K8s (contoh: `postgres-service.database.svc.cluster.local`).
 
-### `weddings`
-- `id` (UUID, PK)
-- `name` (VARCHAR) - e.g., "John & Jane Wedding"
-- `date` (DATE)
-- `venue_name` (VARCHAR, NULL)
-- `slug` (VARCHAR, UNIQUE) - For public invitation link
-- `created_at` (TIMESTAMP)
-- `updated_at` (TIMESTAMP)
+## 4. Aturan Skema & Model
+- Setiap tabel utama wajib memiliki Primary Key berupa ID yang stabil (bisa Auto-Increment Integer atau UUID/CUID).
+- Setiap tabel disarankan memiliki kolom penanda waktu:
+  - `created_at` (Waktu data dibuat)
+  - `updated_at` (Waktu data terakhir diubah)
+- Gunakan `Foreign Key` untuk relasi antar tabel (contoh: Relasi antara Tabel `User` dan Tabel `Transaction`).
+- Jangan menyimpan data sensitif ganda di banyak tempat tanpa alasan arsitektural yang jelas.
 
-### `wedding_members`
-- `id` (UUID, PK)
-- `wedding_id` (UUID, FK -> weddings.id)
-- `user_id` (UUID, FK -> users.id)
-- `role` (VARCHAR) - e.g., "owner", "editor"
-- `created_at` (TIMESTAMP)
+## 5. Migrasi Database
+Skema database tidak boleh diubah secara manual langsung di server (misalnya melalui DBeaver atau pgAdmin) di environment Staging/Production.
 
-### `events`
-- `id` (UUID, PK)
-- `wedding_id` (UUID, FK -> weddings.id)
-- `title` (VARCHAR) - e.g., "Ceremony", "Reception"
-- `start_time` (TIMESTAMP)
-- `end_time` (TIMESTAMP)
-- `location` (VARCHAR)
-- `created_at` (TIMESTAMP)
-- `updated_at` (TIMESTAMP)
+**Alur Migrasi (SOP):**
+1. Buat file migrasi (Migration File) menggunakan *tools* migrasi bawaan Golang (misal `golang-migrate` atau fitur Automigrate GORM).
+2. Uji migrasi di lingkungan lokal.
+3. Commit file migrasi tersebut ke repository.
+4. CI/CD atau proses *startup* backend akan otomatis menjalankan file migrasi tersebut di server.
 
-### `guests`
-- `id` (UUID, PK)
-- `wedding_id` (UUID, FK -> weddings.id)
-- `name` (VARCHAR)
-- `email` (VARCHAR, NULL)
-- `phone` (VARCHAR, NULL)
-- `status` (VARCHAR) - e.g., "invited", "attending", "declined"
-- `group_name` (VARCHAR, NULL) - e.g., "Bride's Family"
-- `created_at` (TIMESTAMP)
-- `updated_at` (TIMESTAMP)
+## 6. Seed Data (Data Awal)
+- Buat *seeder* script jika proyek butuh data awalan (seperti daftar Provinsi, Kategori, atau *Role*).
+- Dilarang memasukkan data sampel rahasia ke dalam sistem Production.
+- Seeder hanya dijalankan manual atau pada environment *Development* dan *Staging*.
 
-### `guest_rsvps`
-- `id` (UUID, PK)
-- `guest_id` (UUID, FK -> guests.id)
-- `event_id` (UUID, FK -> events.id)
-- `is_attending` (BOOLEAN)
-- `dietary_requirements` (VARCHAR, NULL)
-- `created_at` (TIMESTAMP)
-
-### `budgets`
-- `id` (UUID, PK)
-- `wedding_id` (UUID, FK -> weddings.id)
-- `total_budget` (DECIMAL)
-- `created_at` (TIMESTAMP)
-- `updated_at` (TIMESTAMP)
-
-### `budget_categories`
-- `id` (UUID, PK)
-- `budget_id` (UUID, FK -> budgets.id)
-- `name` (VARCHAR) - e.g., "Catering", "Photography"
-- `allocated_amount` (DECIMAL)
-- `spent_amount` (DECIMAL)
-- `created_at` (TIMESTAMP)
-
-### `vendors`
-- `id` (UUID, PK)
-- `wedding_id` (UUID, FK -> weddings.id)
-- `category` (VARCHAR) - e.g., "Photographer"
-- `name` (VARCHAR)
-- `contact_person` (VARCHAR)
-- `email` (VARCHAR, NULL)
-- `phone` (VARCHAR, NULL)
-- `status` (VARCHAR) - e.g., "shortlisted", "hired"
-- `created_at` (TIMESTAMP)
-- `updated_at` (TIMESTAMP)
+## 7. Keamanan Akses
+- Ikuti panduan `SECURITY.md`.
+- Jangan menggunakan user `postgres` (root) untuk aplikasi Backend. Gunakan *dedicated user* (contoh: user `jadisah` pada database `jadisah_db`). (Ini sudah kita terapkan di Kubernetes!).
