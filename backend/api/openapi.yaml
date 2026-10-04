@@ -1,0 +1,763 @@
+openapi: 3.0.3
+info:
+  title: JadiSah API
+  version: 0.1.0
+  description: |
+    Kontrak API resmi JadiSah (Wedding Planner). File ini adalah **Single Source of Truth**
+    untuk Backend (Go, via oapi-codegen), Frontend (TypeScript generated), dan pengujian (Bruno).
+
+    ## Autentikasi
+    Autentikasi ditangani oleh [Limen](https://limenauth.dev). Setelah sign-in / sign-up,
+    server mengirim cookie `limen_session` (HttpOnly). Klien non-browser (Bruno, mobile)
+    dapat memakai header `Authorization: Bearer <token>` dengan token dari response header
+    `Set-Auth-Token`.
+
+    ## Otorisasi (IAM / RBAC)
+    Setiap operasi dilindungi oleh permission `resource:action`. Role bawaan:
+    `SUPER_ADMIN`, `ADMIN`, `USER`. Fitur tertentu juga dibatasi oleh `subscription_tier`
+    (`FREE`, `PREMIUM`, `VIP`).
+
+    > Endpoint dengan tag `auth` diimplementasikan oleh Limen (bukan oleh kode hasil generate),
+    > namun tetap didokumentasikan di sini agar kontraknya jelas untuk Frontend.
+servers:
+  - url: /
+    description: Server yang sama (di belakang Traefik Ingress)
+
+tags:
+  - name: system
+    description: Health check & utilitas
+  - name: auth
+    description: Autentikasi (diimplementasikan oleh Limen)
+  - name: users
+    description: Profil pengguna yang sedang login
+  - name: couples
+    description: Penautan akun pasangan
+  - name: admin
+    description: Manajemen pengguna, role, dan subscription (IAM)
+
+security:
+  - cookieAuth: []
+  - bearerAuth: []
+
+paths:
+  # ──────────────────────────────────────────────────────────────────────────
+  # SYSTEM
+  # ──────────────────────────────────────────────────────────────────────────
+  /api/ping:
+    get:
+      operationId: ping
+      tags: [system]
+      summary: Health check
+      security: []
+      responses:
+        "200":
+          description: Server hidup
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PingResponse"
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # AUTH (Limen) — tidak di-generate menjadi handler Go (exclude-tags: auth)
+  # ──────────────────────────────────────────────────────────────────────────
+  /api/auth/signup/credential:
+    post:
+      operationId: signUpWithCredential
+      tags: [auth]
+      summary: Registrasi dengan email & password
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SignUpRequest"
+      responses:
+        "200":
+          description: Registrasi berhasil, session cookie di-set
+          headers:
+            Set-Cookie:
+              schema: { type: string }
+              description: "`limen_session=...; HttpOnly`"
+            Set-Auth-Token:
+              schema: { type: string }
+              description: Session token untuk Bearer auth
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SessionResponse"
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+        "429": { $ref: "#/components/responses/TooManyRequests" }
+
+  /api/auth/signin/credential:
+    post:
+      operationId: signInWithCredential
+      tags: [auth]
+      summary: Login dengan email & password
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SignInRequest"
+      responses:
+        "200":
+          description: Login berhasil, session cookie di-set
+          headers:
+            Set-Cookie:
+              schema: { type: string }
+            Set-Auth-Token:
+              schema: { type: string }
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SessionResponse"
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+        "429": { $ref: "#/components/responses/TooManyRequests" }
+
+  /api/auth/me:
+    get:
+      operationId: getAuthSession
+      tags: [auth]
+      summary: Ambil user dari session aktif (juga memperpanjang cookie session)
+      responses:
+        "200":
+          description: Session valid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SessionResponse"
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /api/auth/signout:
+    post:
+      operationId: signOut
+      tags: [auth]
+      summary: Logout (mencabut session saat ini)
+      responses:
+        "204":
+          description: Berhasil logout
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /api/auth/sessions:
+    get:
+      operationId: listAuthSessions
+      tags: [auth]
+      summary: Daftar session aktif milik user
+      responses:
+        "200":
+          description: Daftar session
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  additionalProperties: true
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /api/auth/revoke-sessions:
+    post:
+      operationId: revokeAllAuthSessions
+      tags: [auth]
+      summary: Cabut semua session milik user (logout dari semua perangkat)
+      responses:
+        "204":
+          description: Semua session dicabut
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /api/auth/passwords/change:
+    post:
+      operationId: changePassword
+      tags: [auth]
+      summary: Ganti password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChangePasswordRequest"
+      responses:
+        "200":
+          description: Password berhasil diganti
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SessionResponse"
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  /api/auth/passwords/request-reset:
+    post:
+      operationId: requestPasswordReset
+      tags: [auth]
+      summary: Minta email reset password
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email: { type: string, format: email }
+      responses:
+        "200":
+          description: Selalu sukses (mencegah email enumeration)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+
+  /api/auth/passwords/reset:
+    post:
+      operationId: resetPassword
+      tags: [auth]
+      summary: Reset password memakai token dari email
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token, new_password]
+              properties:
+                token: { type: string }
+                new_password: { type: string, minLength: 8 }
+      responses:
+        "200":
+          description: Password berhasil di-reset
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+        "400": { $ref: "#/components/responses/BadRequest" }
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # USERS
+  # ──────────────────────────────────────────────────────────────────────────
+  /api/users/me:
+    get:
+      operationId: getMyProfile
+      tags: [users]
+      summary: Profil lengkap user login (role, permission, subscription, pasangan)
+      responses:
+        "200":
+          description: Profil user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Profile"
+        "401": { $ref: "#/components/responses/Unauthorized" }
+    patch:
+      operationId: updateMyProfile
+      tags: [users]
+      summary: Ubah nama user login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateProfileRequest"
+      responses:
+        "200":
+          description: Profil berhasil diubah
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Profile"
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # COUPLES
+  # ──────────────────────────────────────────────────────────────────────────
+  /api/couples/me:
+    get:
+      operationId: getMyCouple
+      tags: [couples]
+      summary: Tautan pasangan yang sedang aktif (ACCEPTED)
+      responses:
+        "200":
+          description: Tautan aktif
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CoupleLink"
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    delete:
+      operationId: unlinkMyCouple
+      tags: [couples]
+      summary: Putuskan tautan pasangan aktif
+      responses:
+        "204":
+          description: Tautan diputus
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/couples/invitations:
+    get:
+      operationId: listCoupleInvitations
+      tags: [couples]
+      summary: Undangan PENDING yang masuk & keluar
+      responses:
+        "200":
+          description: Daftar undangan
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CoupleInvitationList"
+        "401": { $ref: "#/components/responses/Unauthorized" }
+    post:
+      operationId: createCoupleInvitation
+      tags: [couples]
+      summary: Undang pasangan berdasarkan email
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCoupleInvitationRequest"
+      responses:
+        "201":
+          description: Undangan dibuat
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CoupleLink"
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  /api/couples/invitations/{invitationId}/accept:
+    post:
+      operationId: acceptCoupleInvitation
+      tags: [couples]
+      summary: Terima undangan (hanya oleh pihak yang diundang)
+      parameters:
+        - $ref: "#/components/parameters/InvitationId"
+      responses:
+        "200":
+          description: Undangan diterima, akun tertaut
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CoupleLink"
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  /api/couples/invitations/{invitationId}/reject:
+    post:
+      operationId: rejectCoupleInvitation
+      tags: [couples]
+      summary: Tolak undangan (hanya oleh pihak yang diundang)
+      parameters:
+        - $ref: "#/components/parameters/InvitationId"
+      responses:
+        "200":
+          description: Undangan ditolak
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CoupleLink"
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  /api/couples/invitations/{invitationId}:
+    delete:
+      operationId: cancelCoupleInvitation
+      tags: [couples]
+      summary: Batalkan undangan (hanya oleh pengirim)
+      parameters:
+        - $ref: "#/components/parameters/InvitationId"
+      responses:
+        "204":
+          description: Undangan dibatalkan
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # ADMIN (IAM)
+  # ──────────────────────────────────────────────────────────────────────────
+  /api/admin/users:
+    get:
+      operationId: adminListUsers
+      tags: [admin]
+      summary: Daftar semua user (permission users:read)
+      parameters:
+        - name: q
+          in: query
+          description: Filter email / nama (contains, case-insensitive)
+          schema: { type: string, maxLength: 100 }
+        - name: page
+          in: query
+          schema: { type: integer, minimum: 1, default: 1 }
+        - name: per_page
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
+      responses:
+        "200":
+          description: Halaman user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminUserPage"
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/admin/users/{userId}/roles:
+    put:
+      operationId: adminSetUserRoles
+      tags: [admin]
+      summary: Ganti seluruh role milik user (permission roles:assign — SUPER_ADMIN)
+      parameters:
+        - $ref: "#/components/parameters/UserId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SetUserRolesRequest"
+      responses:
+        "200":
+          description: Role diperbarui
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminUser"
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  /api/admin/users/{userId}/subscription:
+    put:
+      operationId: adminSetUserSubscription
+      tags: [admin]
+      summary: Ubah subscription tier user (permission subscriptions:update)
+      parameters:
+        - $ref: "#/components/parameters/UserId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SetUserSubscriptionRequest"
+      responses:
+        "200":
+          description: Subscription diperbarui
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminUser"
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/admin/roles:
+    get:
+      operationId: adminListRoles
+      tags: [admin]
+      summary: Daftar role beserta permission-nya (permission roles:read)
+      responses:
+        "200":
+          description: Daftar role
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Role"
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: limen_session
+    bearerAuth:
+      type: http
+      scheme: bearer
+
+  parameters:
+    InvitationId:
+      name: invitationId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    UserId:
+      name: userId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+
+  responses:
+    BadRequest:
+      description: Request tidak valid
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    Unauthorized:
+      description: Belum login / session tidak valid
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    Forbidden:
+      description: Tidak memiliki permission / subscription yang dibutuhkan
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    NotFound:
+      description: Resource tidak ditemukan
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    Conflict:
+      description: Konflik state (mis. sudah tertaut / undangan tidak lagi PENDING)
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    ValidationError:
+      description: Validasi field gagal
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    TooManyRequests:
+      description: Rate limit terlampaui
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+
+  schemas:
+    # ── Umum ────────────────────────────────────────────────────────────────
+    Error:
+      type: object
+      required: [message]
+      properties:
+        message: { type: string, example: "forbidden" }
+        code: { type: string, example: "FORBIDDEN" }
+
+    MessageResponse:
+      type: object
+      required: [message]
+      properties:
+        message: { type: string }
+
+    PingResponse:
+      type: object
+      required: [message]
+      properties:
+        message: { type: string, example: pong }
+
+    # ── Enum IAM ────────────────────────────────────────────────────────────
+    RoleName:
+      type: string
+      enum: [SUPER_ADMIN, ADMIN, USER]
+
+    SubscriptionTier:
+      type: string
+      enum: [FREE, PREMIUM, VIP]
+
+    # ── Auth (Limen) ────────────────────────────────────────────────────────
+    SignUpRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email: { type: string, format: email, example: "budi@example.com" }
+        password:
+          type: string
+          minLength: 8
+          example: "Rahasia123!"
+
+    SignInRequest:
+      type: object
+      required: [credential, password]
+      properties:
+        credential:
+          type: string
+          description: Email user
+          example: "budi@example.com"
+        password: { type: string, example: "Rahasia123!" }
+        remember_me:
+          type: boolean
+          default: true
+          description: false = session pendek (1 jam)
+
+    ChangePasswordRequest:
+      type: object
+      required: [current_password, new_password]
+      properties:
+        current_password: { type: string }
+        new_password: { type: string, minLength: 8 }
+        revoke_other_sessions: { type: boolean, default: true }
+
+    AuthUser:
+      type: object
+      description: Representasi user yang dikembalikan oleh endpoint Limen
+      required: [id, email, subscription_tier]
+      properties:
+        id: { type: string, format: uuid }
+        email: { type: string, format: email }
+        first_name: { type: string, nullable: true }
+        last_name: { type: string, nullable: true }
+        email_verified_at: { type: string, format: date-time, nullable: true }
+        subscription_tier: { $ref: "#/components/schemas/SubscriptionTier" }
+        created_at: { type: string, format: date-time }
+
+    SessionResponse:
+      type: object
+      required: [user]
+      properties:
+        user: { $ref: "#/components/schemas/AuthUser" }
+
+    # ── Users ───────────────────────────────────────────────────────────────
+    UserSummary:
+      type: object
+      required: [id, email]
+      properties:
+        id: { type: string, format: uuid }
+        email: { type: string, format: email }
+        first_name: { type: string, nullable: true }
+        last_name: { type: string, nullable: true }
+
+    Profile:
+      type: object
+      required: [id, email, subscription_tier, roles, permissions, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        email: { type: string, format: email }
+        first_name: { type: string, nullable: true }
+        last_name: { type: string, nullable: true }
+        email_verified: { type: boolean }
+        subscription_tier: { $ref: "#/components/schemas/SubscriptionTier" }
+        subscription_expires_at: { type: string, format: date-time, nullable: true }
+        roles:
+          type: array
+          items: { $ref: "#/components/schemas/RoleName" }
+        permissions:
+          type: array
+          description: Daftar permission efektif dalam format `resource:action`
+          items: { type: string, example: "couple:invite" }
+        partner:
+          allOf:
+            - $ref: "#/components/schemas/UserSummary"
+          nullable: true
+          description: Pasangan yang tertaut (null jika belum)
+        created_at: { type: string, format: date-time }
+
+    UpdateProfileRequest:
+      type: object
+      minProperties: 1
+      properties:
+        first_name: { type: string, minLength: 1, maxLength: 100 }
+        last_name: { type: string, minLength: 1, maxLength: 100 }
+
+    # ── Couples ─────────────────────────────────────────────────────────────
+    CoupleLinkStatus:
+      type: string
+      enum: [PENDING, ACCEPTED, REJECTED, CANCELLED, UNLINKED]
+
+    CoupleLink:
+      type: object
+      required: [id, requester, partner, status, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        requester: { $ref: "#/components/schemas/UserSummary" }
+        partner: { $ref: "#/components/schemas/UserSummary" }
+        status: { $ref: "#/components/schemas/CoupleLinkStatus" }
+        created_at: { type: string, format: date-time }
+        responded_at: { type: string, format: date-time, nullable: true }
+
+    CoupleInvitationList:
+      type: object
+      required: [incoming, outgoing]
+      properties:
+        incoming:
+          type: array
+          items: { $ref: "#/components/schemas/CoupleLink" }
+        outgoing:
+          type: array
+          items: { $ref: "#/components/schemas/CoupleLink" }
+
+    CreateCoupleInvitationRequest:
+      type: object
+      required: [partner_email]
+      properties:
+        partner_email: { type: string, format: email }
+
+    # ── Admin ───────────────────────────────────────────────────────────────
+    AdminUser:
+      type: object
+      required: [id, email, subscription_tier, roles, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        email: { type: string, format: email }
+        first_name: { type: string, nullable: true }
+        last_name: { type: string, nullable: true }
+        subscription_tier: { $ref: "#/components/schemas/SubscriptionTier" }
+        subscription_expires_at: { type: string, format: date-time, nullable: true }
+        roles:
+          type: array
+          items: { $ref: "#/components/schemas/RoleName" }
+        created_at: { type: string, format: date-time }
+
+    AdminUserPage:
+      type: object
+      required: [items, total, page, per_page]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/AdminUser" }
+        total: { type: integer, format: int64 }
+        page: { type: integer }
+        per_page: { type: integer }
+
+    SetUserRolesRequest:
+      type: object
+      required: [roles]
+      properties:
+        roles:
+          type: array
+          minItems: 1
+          uniqueItems: true
+          items: { $ref: "#/components/schemas/RoleName" }
+
+    SetUserSubscriptionRequest:
+      type: object
+      required: [tier]
+      properties:
+        tier: { $ref: "#/components/schemas/SubscriptionTier" }
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: Kosongkan untuk tanpa batas waktu
+
+    Role:
+      type: object
+      required: [name, permissions]
+      properties:
+        name: { $ref: "#/components/schemas/RoleName" }
+        description: { type: string }
+        permissions:
+          type: array
+          items: { type: string, example: "users:read" }
