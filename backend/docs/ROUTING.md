@@ -1,23 +1,42 @@
-# ROUTING.md
+# Panduan Routing API
 
-## Standar Pembuatan Routing (Gin)
+Aplikasi ini menggunakan filosofi **Contract-First**. Anda TIDAK meng-inisialisasi routing secara eksplisit menggunakan _framework raw_ seperti mendaftarkan rute satu per satu secara manual.
 
-Semua endpoint untuk Frontend harus dibuat di bawah grup `/api`.
+## Alur Pembuatan Rute
 
-**Contoh yang Benar:**
-```go
-api := r.Group("/api")
-{
-    // Akses: GET /api/users
-    api.GET("/users", controllers.GetUsers)
-    
-    // Gunakan middleware (contoh: Auth)
-    protected := api.Group("/")
-    protected.Use(middlewares.RequireAuth)
-    {
-        protected.POST("/transactions", controllers.CreateTransaction)
-    }
-}
-```
+1. **Definisikan di OpenAPI (`api/openapi.yaml`)**
+   Contoh:
+   ```yaml
+   paths:
+     /api/weddings:
+       get:
+         summary: Get all weddings
+         operationId: getWeddings
+   ```
 
-Jangan membuat *route* di luar grup `/api` kecuali untuk *Health Check* Infrastruktur K3s.
+2. **Generate Kode (oapi-codegen)**
+   Jalankan alat *generator* (menggunakan Makefile atau perintah langsung). Ini akan menghasilkan interface Go:
+   ```go
+   type ServerInterface interface {
+       GetWeddings(ctx echo.Context) error
+   }
+   ```
+
+3. **Implementasi Handler**
+   Di `internal/wedding/handler.go`, buat struktur yang memenuhi interface `ServerInterface`:
+   ```go
+   func (h *WeddingHandler) GetWeddings(ctx echo.Context) error {
+       // Logika
+       return ctx.JSON(200, data)
+   }
+   ```
+
+4. **Registrasi Server**
+   Di `cmd/server/main.go`, daftarkan implementasi Anda:
+   ```go
+   generated.RegisterHandlers(e, myHandlers)
+   ```
+
+**Pengecualian:**
+- Rute untuk infrastruktur atau metric (seperti `/healthz`, `/readyz`, atau rute internal K8s Prometheus) dapat dibuat langsung di *router instance* tanpa harus masuk ke OpenAPI.
+- **Limen Auth:** Handler autentikasi dari Limen dapat di-*mount* langsung di router Go menggunakan `http.Handler` standar, meskipun kontrak I/O-nya tetap harus terdokumentasi di OpenAPI untuk tim Frontend.
