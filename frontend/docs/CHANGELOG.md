@@ -1,14 +1,27 @@
 # Frontend Changelog
 
-## [Unreleased]
+- Added **Live Real-Time Countdown (Hari : Jam : Menit : Detik)**:
+  - Upgraded countdown from days-only to a 4-column structured grid (*Hari*, *Jam*, *Menit*, *Detik*) in [CountdownBanner.tsx](file:///Users/cdsm-kal02/Jadisah/JadiSah-Application/frontend/components/dashboard/CountdownBanner.tsx).
+  - Implemented `calculateDetailedCountdown` in [dashboard-utils.ts](file:///Users/cdsm-kal02/Jadisah/JadiSah-Application/frontend/lib/dashboard-utils.ts) with real-time `setInterval` updates every second.
+  - Added unit test cases for detailed countdown calculation and expired date handling in `__tests__/dashboard-utils.test.mjs`.
+- Fixed **Color Contrast & Black UI Element Glitches**:
+  - Eliminated dark mode class overrides (`dark:bg-zinc-900`, `dark:text-zinc-100`, etc.) that caused `CardTitle` ("Rundown & Sesi Acara" & "Checklist Persiapan") to become white on light backgrounds and input fields to turn into black boxes.
+  - Replaced harsh black buttons (`bg-charcoal-900`) on `Tutup Form`, `Tambah Sesi`, `Tambah Tugas`, `Simpan Sesi Acara`, `Simpan Tugas`, and `Tambah Tamu` with elegant Champagne Gold (`bg-champagne hover:bg-champagne-light text-charcoal-900 font-semibold shadow-xs border border-champagne-dark/20`).
+  - Replaced black active filter pills (`All Tasks`, `Semua`, dll) with soft Champagne Gold badges (`bg-champagne text-charcoal-900 font-semibold`).
+  - Improved contrast of completed checklist tasks to `text-charcoal-600 font-medium` and uncompleted tasks to `text-charcoal-900 font-semibold`.
+  - Refactored `CountdownBanner` from a dark charcoal backdrop to a warm ivory and champagne luxury hero card for a completely clean, bright, and cohesive wedding aesthetic.
+  - Set default `Button` variant to Champagne Gold and default `Badge` variant to Champagne Soft.
+- Added **Filter Tenggat Waktu** in Checklist Persiapan (*All*, *Bulan Ini*, *2 Bulan*, *3 Bulan*) with date parser utility `parseTaskDueDate` and `isTaskInTimeWindow`.
+- Added interactive **`Calendar`** and **`DatePicker`** components for selecting checklist due dates via a calendar popover.
+- Added **`TimePicker`** component for choosing rundown start and end times from a structured 15-minute interval dropdown (WIB) instead of manual typing.
+- Added interactive **Tambah Sesi Acara (Rundown)** and **Tambah Tugas (Checklist)** in `TimelineChecklist`.
+- Added task filters (*Semua*, *Belum Selesai*, *Selesai*), category selection, due dates, and delete actions for both rundown events and checklist items.
+- Synchronized rundown counts and checklist progress badges dynamically across the sidebar, metric cards, and dashboard tabs.
+- Rebuilt User Dashboard with modern **Sidebar Layout** (desktop sidebar & mobile sliding drawer).
+- Integrated core **shadcn/ui** components (`Button`, `Card`, `Badge`, `Input`, `Progress`, `Table`, `Separator`, `Avatar`) with Tailwind CSS v4.
+- Added `DashboardSidebar` and `DashboardHeader` with interactive tabs, status badges, global search input, and responsive toggle.
+- Refactored `CountdownBanner`, `StatsCards`, `RecentGuestsTable`, `BudgetOverviewCard`, and `TimelineChecklist` to utilize shadcn/ui primitives.
 - Added complete User Dashboard (`/dashboard`) for wedding couples.
-- Created reusable components:
-  - `DashboardNavbar`: Header navigation with tab switcher and profile summary.
-  - `CountdownBanner`: Countdown hero banner with invitation link copying and WhatsApp sharing.
-  - `StatsCards`: 4 high-impact metric cards (RSVP, Budget, Vendors, Events).
-  - `RecentGuestsTable`: Interactive guest list with search, status filtering, and quick-add form.
-  - `BudgetOverviewCard`: Category-by-category expense tracking with progress indicators.
-  - `TimelineChecklist`: Event rundown and interactive to-do checklist.
 - Added calculation utilities (`lib/dashboard-utils.ts`) with unit tests in `__tests__/dashboard-utils.test.mjs`.
 - Configured `npm test` script in `package.json`.
 - Added documentation in `COMPONENTS.md`, `TESTING.md`, and updated `PLANNING.md`.
