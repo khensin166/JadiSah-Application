@@ -10,5 +10,8 @@ func Migrate(db *gorm.DB) error {
 		&Role{},
 		&Permission{},
 		&CoupleLink{},
+		&LimenSession{},
+		&LimenVerification{},
+		&LimenAccount{},
 	)
 }

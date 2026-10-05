@@ -13,10 +13,15 @@ func InitLimen(db *gorm.DB, secret []byte) (*limen.Limen, error) {
 	config := &limen.Config{
 		Database: adapter,
 		Secret:   secret,
-		Schema:   limen.NewDefaultSchemaConfig(), // Using default UUID id generation
+		Schema: limen.NewDefaultSchemaConfig(
+			limen.WithSchemaIDGenerator(&UUIDGenerator{}),
+		), // Using custom UUID generator instead of default BIGINT
 		Plugins: []limen.Plugin{
 			credentialpassword.New(),
 		},
+		Session: limen.NewDefaultSessionConfig(
+			limen.WithBearerEnabled(),
+		),
 		HTTP: limen.NewDefaultHTTPConfig(limen.WithHTTPBasePath("/api/auth")),
 	}
 
