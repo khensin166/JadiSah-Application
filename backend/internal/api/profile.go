@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	apigen "github.com/khensin166/JadiSah-Application/backend/generated/api"
 	"github.com/khensin166/JadiSah-Application/backend/internal/models"
 	openapi_types "github.com/oapi-codegen/runtime/types"
@@ -12,13 +11,10 @@ import (
 
 // GetMyProfile implements apigen.ServerInterface.
 func (s *Server) GetMyProfile(c *gin.Context) {
-	// 1. Validate Auth manually since we haven't applied global middleware to this route
-	session, err := s.auth.GetSession(c.Request)
-	if err != nil || session == nil {
-		c.JSON(http.StatusUnauthorized, apigen.Unauthorized{Message: "unauthorized"})
+	userID, ok := s.authenticate(c)
+	if !ok {
 		return
 	}
-	userID := session.User.ID.(string)
 
 	// 2. Fetch user profile from database with roles
 	var user models.User
@@ -36,7 +32,7 @@ func (s *Server) GetMyProfile(c *gin.Context) {
 			permissionsMap[perm.Action] = true
 		}
 	}
-	
+
 	permissions := make([]string, 0, len(permissionsMap))
 	for perm := range permissionsMap {
 		permissions = append(permissions, perm)
@@ -45,7 +41,9 @@ func (s *Server) GetMyProfile(c *gin.Context) {
 	// 4. Fetch Partner information (if any)
 	var coupleLink models.CoupleLink
 	partnerInfo := (*apigen.UserSummary)(nil)
-	
+
+	var err error
+
 	// Query ACCEPTED links where user is either requester or partner
 	err = s.db.Preload("Requester").Preload("Partner").
 		Where("(requester_id = ? OR partner_id = ?) AND status = ?", user.ID, user.ID, models.Accepted).
@@ -93,16 +91,8 @@ func (s *Server) GetMyProfile(c *gin.Context) {
 
 // UpdateMyProfile implements apigen.ServerInterface.
 func (s *Server) UpdateMyProfile(c *gin.Context) {
-	// 1. Auth check
-	session, err := s.auth.GetSession(c.Request)
-	if err != nil || session == nil {
-		c.JSON(http.StatusUnauthorized, apigen.Unauthorized{Message: "unauthorized"})
-		return
-	}
-	userID := session.User.ID.(string)
-	parsedUUID, err := uuid.Parse(userID)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, apigen.Error{Message: "invalid user id format"})
+	userID, ok := s.authenticate(c)
+	if !ok {
 		return
 	}
 
@@ -123,7 +113,7 @@ func (s *Server) UpdateMyProfile(c *gin.Context) {
 	}
 
 	if len(updates) > 0 {
-		if err := s.db.Model(&models.User{}).Where("id = ?", parsedUUID).Updates(updates).Error; err != nil {
+		if err := s.db.Model(&models.User{}).Where("id = ?", userID).Updates(updates).Error; err != nil {
 			c.JSON(http.StatusInternalServerError, apigen.Error{Message: "failed to update profile"})
 			return
 		}

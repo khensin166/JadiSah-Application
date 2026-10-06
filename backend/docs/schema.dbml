@@ -1,0 +1,104 @@
+Project JadiSah {
+  database_type: 'PostgreSQL'
+  Note: 'Wedding Planner API & IAM Database Schema'
+}
+
+Table users {
+  id uuid [pk, default: `gen_random_uuid()`]
+  email varchar(255) [not null, unique]
+  password varchar(255)
+  email_verified_at timestamptz
+  first_name varchar(255)
+  last_name varchar(255)
+  subscription_tier varchar(50) [default: 'FREE']
+  subscription_expires_at timestamptz
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
+}
+
+Table couple_links {
+  id uuid [pk, default: `gen_random_uuid()`]
+  requester_id uuid [not null]
+  partner_id uuid [not null]
+  status varchar(50) [not null, default: 'PENDING', note: 'PENDING, ACCEPTED, REJECTED']
+  created_at timestamptz [not null]
+  responded_at timestamptz
+}
+
+Table roles {
+  id uuid [pk, default: `gen_random_uuid()`]
+  name varchar(255) [not null, unique, note: 'SUPER_ADMIN, ADMIN, USER']
+  description text
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
+}
+
+Table permissions {
+  id uuid [pk, default: `gen_random_uuid()`]
+  action varchar(255) [not null, unique, note: 'format: resource:action']
+  description text
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
+}
+
+Table user_roles {
+  user_id uuid [pk]
+  role_id uuid [pk]
+}
+
+Table role_permissions {
+  role_id uuid [pk]
+  permission_id uuid [pk]
+}
+
+Table sessions {
+  id uuid [pk, default: `gen_random_uuid()`]
+  token varchar(255) [not null, unique]
+  user_id uuid [not null]
+  created_at timestamptz [not null]
+  expires_at timestamptz [not null]
+  last_access timestamptz [not null]
+  metadata text
+  
+  Note: 'Limen Auth Sessions'
+}
+
+Table verifications {
+  id uuid [pk, default: `gen_random_uuid()`]
+  subject varchar(255) [not null]
+  value varchar(255) [not null, unique]
+  expires_at timestamptz [not null]
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
+  
+  Note: 'Limen Auth Verifications'
+}
+
+Table accounts {
+  id uuid [pk, default: `gen_random_uuid()`]
+  user_id uuid [not null]
+  provider varchar(255) [not null]
+  provider_account_id varchar(255) [not null]
+  access_token text
+  refresh_token text
+  access_token_expires_at timestamptz
+  scope varchar(255)
+  id_token text
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
+  
+  Note: 'Limen Auth OAuth Accounts'
+}
+
+// Relasi (Foreign Keys)
+Ref: couple_links.requester_id > users.id
+Ref: couple_links.partner_id > users.id
+
+Ref: user_roles.user_id > users.id
+Ref: user_roles.role_id > roles.id
+
+Ref: role_permissions.role_id > roles.id
+Ref: role_permissions.permission_id > permissions.id
+
+Ref: sessions.user_id > users.id
+Ref: accounts.user_id > users.id

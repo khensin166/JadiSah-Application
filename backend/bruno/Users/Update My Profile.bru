@@ -1,0 +1,26 @@
+meta {
+  name: Update My Profile
+  type: http
+  seq: 2
+}
+
+patch {
+  url: {{url}}/api/users/me
+  body: json
+  auth: bearer
+}
+
+headers {
+  Origin: {{url}}
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "first_name": "Budi",
+    "last_name": "Santoso"
+  }
+}

@@ -12,8 +12,8 @@
 - [x] Siapkan skema database (GORM Models) untuk `users`, `roles`, `permissions`, `couple_links`.
 - [x] Buat Middleware Go untuk mengekstrak Session dari Limen dan mencocokkan RBAC *Required Permissions*.
 - [x] Implementasi endpoint untuk `Profile` (Membaca & Update) dan `Couples` (Manajemen Undangan Pasangan).
-- [ ] **FUTURE IMPLEMENTATION:** Buat *Seeder* untuk Roles default (`SUPER_ADMIN`, `ADMIN`, `USER`) dan menyisipkannya pada startup aplikasi.
-- [ ] **FUTURE IMPLEMENTATION:** Implementasi endpoint Admin untuk manajemen User, Role, dan Subscriptions (`AdminListRoles`, `AdminListUsers`, `AdminSetUserRoles`, `AdminSetUserSubscription`).
+- [x] Buat *Seeder* untuk Roles default (`SUPER_ADMIN`, `ADMIN`, `USER`) dan menyisipkannya pada startup aplikasi (`internal/db/seeder.go`).
+- [x] Implementasi endpoint Admin untuk manajemen User, Role, dan Subscriptions (`AdminListRoles`, `AdminListUsers`, `AdminSetUserRoles`, `AdminSetUserSubscription`) di `internal/api/admin.go`.
 
 ## Fase 3: Modul Inti Aplikasi (Future Implementation)
 - [ ] Modul `wedding` (Manajemen Acara & Konfigurasi Pernikahan).
@@ -25,5 +25,5 @@
 
 ### Catatan Kondisi Saat Ini (State Checkpoint)
 - **Otentikasi:** Limen sudah terhubung dengan GORM Adapter menggunakan plugin `credential-password`.
-- **Database:** AutoMigrate sudah dipanggil di `main.go`. Struktur berada di `internal/models/`.
+- **Database:** AutoMigrate sudah dipanggil di `cmd/server/main.go`. Struktur berada di `internal/models/`.
 - **Server:** Menggunakan framework Gin, handler server di-generate menggunakan `oapi-codegen` dan dipisahkan menjadi `internal/api/profile.go` serta `internal/api/couples.go`.

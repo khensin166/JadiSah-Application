@@ -6,6 +6,7 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
 	
 	"github.com/khensin166/JadiSah-Application/backend/internal/api"
 	"github.com/khensin166/JadiSah-Application/backend/internal/auth"
@@ -15,6 +16,10 @@ import (
 )
 
 func main() {
+	// Coba load .env untuk development lokal. Jika gagal/file tidak ada, abaikan saja
+	// karena di Kubernetes (Pods) kita tidak pakai .env
+	_ = godotenv.Load()
+
 	// Initialize database
 	database, err := db.Init()
 	if err != nil {

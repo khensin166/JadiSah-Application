@@ -152,12 +152,12 @@ Langkah-langkah yang **sudah** dan **akan** kita kerjakan:
 - [x] **Langkah 2: Setup Database & Limen**
   - Pembuatan file `internal/db/db.go` (GORM connection).
   - Setup Limen di `internal/auth/auth.go` dengan `credential-password` dan GORM adapter.
-  - Pembuatan GORM Models di `internal/models/models.go` yang sesuai dengan ERD di atas.
-  - Wiring dependencies di `main.go` dan menjalankan `models.Migrate(db)`.
-- [ ] **Langkah 3: Implementasi Handler (Business Logic)**
-  - Tulis logika bisnis untuk fitur User Profile, Couple Links, dan IAM Admin di dalam `internal/api/server.go`.
-  - Terapkan Auth & Role middleware.
-- [ ] **Langkah 4: Seeding Data (RBAC)**
-  - Buat script untuk mengisi database dengan default role (`SUPER_ADMIN`, `ADMIN`, `USER`) dan permission (`users:read`, dsb).
+  - Pembuatan GORM Models di `internal/models/` yang sesuai dengan ERD di atas.
+  - Wiring dependencies di `cmd/server/main.go` dan menjalankan `models.Migrate(db)`.
+- [x] **Langkah 3: Implementasi Handler (Business Logic)**
+  - Profile: `internal/api/profile.go`, Couple Links: `internal/api/couples.go`, IAM Admin: `internal/api/admin.go`.
+  - Auth & permission check per-handler via `Server.authorize(c, "<permission>")` (Limen session + RBAC lookup).
+- [x] **Langkah 4: Seeding Data (RBAC)**
+  - `internal/db/seeder.go` (`SeedRolesAndPermissions`) dijalankan otomatis & idempotent saat startup.
 - [ ] **Langkah 5: Pengujian Terintegrasi (Bruno / E2E)**
   - Coba integrasi Auth, pendaftaran akun, dan relasi couple dengan tool API Client seperti Bruno atau cURL.

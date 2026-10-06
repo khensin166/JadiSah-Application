@@ -14,12 +14,10 @@ import (
 )
 
 func (s *Server) CreateCoupleInvitation(c *gin.Context) {
-	session, err := s.auth.GetSession(c.Request)
-	if err != nil || session == nil {
-		c.JSON(http.StatusUnauthorized, apigen.Unauthorized{Message: "unauthorized"})
+	userID, ok := s.authenticate(c)
+	if !ok {
 		return
 	}
-	userID := uuid.MustParse(session.User.ID.(string))
 
 	var req apigen.CreateCoupleInvitationRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -27,7 +25,14 @@ func (s *Server) CreateCoupleInvitation(c *gin.Context) {
 		return
 	}
 
-	if string(req.PartnerEmail) == session.User.Email {
+	// Fetch user to get their email (since we only have userID from authenticate)
+	var user models.User
+	if err := s.db.Select("email").Where("id = ?", userID).First(&user).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, apigen.Error{Message: "failed to fetch user"})
+		return
+	}
+
+	if string(req.PartnerEmail) == user.Email {
 		c.JSON(http.StatusBadRequest, apigen.BadRequest{Message: "cannot invite yourself"})
 		return
 	}
@@ -46,22 +51,22 @@ func (s *Server) CreateCoupleInvitation(c *gin.Context) {
 	// 2. Ensure neither user is already in an ACCEPTED couple
 	var existingLink int64
 	s.db.Model(&models.CoupleLink{}).
-		Where("(requester_id = ? OR partner_id = ? OR requester_id = ? OR partner_id = ?) AND status = ?", 
-		userID, userID, partner.ID, partner.ID, models.Accepted).
+		Where("(requester_id = ? OR partner_id = ? OR requester_id = ? OR partner_id = ?) AND status = ?",
+			userID, userID, partner.ID, partner.ID, models.Accepted).
 		Count(&existingLink)
 
 	if existingLink > 0 {
 		c.JSON(http.StatusConflict, apigen.Conflict{Message: "one of the users is already in a couple"})
 		return
 	}
-	
+
 	// 3. Check for pending invitations between them
 	var pendingLink int64
 	s.db.Model(&models.CoupleLink{}).
 		Where("((requester_id = ? AND partner_id = ?) OR (requester_id = ? AND partner_id = ?)) AND status = ?",
-		userID, partner.ID, partner.ID, userID, models.Pending).
+			userID, partner.ID, partner.ID, userID, models.Pending).
 		Count(&pendingLink)
-		
+
 	if pendingLink > 0 {
 		c.JSON(http.StatusConflict, apigen.Conflict{Message: "pending invitation already exists"})
 		return
@@ -83,12 +88,10 @@ func (s *Server) CreateCoupleInvitation(c *gin.Context) {
 }
 
 func (s *Server) ListCoupleInvitations(c *gin.Context) {
-	session, err := s.auth.GetSession(c.Request)
-	if err != nil || session == nil {
-		c.JSON(http.StatusUnauthorized, apigen.Unauthorized{Message: "unauthorized"})
+	userID, ok := s.authenticate(c)
+	if !ok {
 		return
 	}
-	userID := uuid.MustParse(session.User.ID.(string))
 
 	var incoming []models.CoupleLink
 	var outgoing []models.CoupleLink
@@ -112,12 +115,10 @@ func (s *Server) ListCoupleInvitations(c *gin.Context) {
 }
 
 func (s *Server) AcceptCoupleInvitation(c *gin.Context, invitationId apigen.InvitationId) {
-	session, err := s.auth.GetSession(c.Request)
-	if err != nil || session == nil {
-		c.JSON(http.StatusUnauthorized, apigen.Unauthorized{Message: "unauthorized"})
+	userID, ok := s.authenticate(c)
+	if !ok {
 		return
 	}
-	userID := uuid.MustParse(session.User.ID.(string))
 
 	var link models.CoupleLink
 	if err := s.db.First(&link, "id = ?", invitationId).Error; err != nil {
@@ -134,7 +135,7 @@ func (s *Server) AcceptCoupleInvitation(c *gin.Context, invitationId apigen.Invi
 		c.JSON(http.StatusBadRequest, apigen.BadRequest{Message: "invitation is not pending"})
 		return
 	}
-	
+
 	now := time.Now()
 	link.Status = models.Accepted
 	link.RespondedAt = &now
@@ -143,11 +144,11 @@ func (s *Server) AcceptCoupleInvitation(c *gin.Context, invitationId apigen.Invi
 		c.JSON(http.StatusInternalServerError, apigen.Error{Message: "failed to accept invitation"})
 		return
 	}
-	
+
 	// Cancel any other pending invitations for both users
 	s.db.Model(&models.CoupleLink{}).
 		Where("(requester_id = ? OR partner_id = ? OR requester_id = ? OR partner_id = ?) AND status = ? AND id != ?",
-		link.RequesterID, link.RequesterID, link.PartnerID, link.PartnerID, models.Pending, link.ID).
+			link.RequesterID, link.RequesterID, link.PartnerID, link.PartnerID, models.Pending, link.ID).
 		Updates(map[string]interface{}{"status": models.Cancelled, "responded_at": now})
 
 	c.JSON(http.StatusOK, gin.H{"message": "invitation accepted"})
@@ -162,12 +163,10 @@ func (s *Server) CancelCoupleInvitation(c *gin.Context, invitationId apigen.Invi
 }
 
 func (s *Server) updateInvitationStatus(c *gin.Context, invitationId uuid.UUID, newStatus models.CoupleLinkStatus, isRequester bool) {
-	session, err := s.auth.GetSession(c.Request)
-	if err != nil || session == nil {
-		c.JSON(http.StatusUnauthorized, apigen.Unauthorized{Message: "unauthorized"})
+	userID, ok := s.authenticate(c)
+	if !ok {
 		return
 	}
-	userID := uuid.MustParse(session.User.ID.(string))
 
 	var link models.CoupleLink
 	if err := s.db.First(&link, "id = ?", invitationId).Error; err != nil {
@@ -201,12 +200,10 @@ func (s *Server) updateInvitationStatus(c *gin.Context, invitationId uuid.UUID, 
 }
 
 func (s *Server) GetMyCouple(c *gin.Context) {
-	session, err := s.auth.GetSession(c.Request)
-	if err != nil || session == nil {
-		c.JSON(http.StatusUnauthorized, apigen.Unauthorized{Message: "unauthorized"})
+	userID, ok := s.authenticate(c)
+	if !ok {
 		return
 	}
-	userID := uuid.MustParse(session.User.ID.(string))
 
 	var link models.CoupleLink
 	if err := s.db.Preload("Requester").Preload("Partner").
@@ -220,12 +217,10 @@ func (s *Server) GetMyCouple(c *gin.Context) {
 }
 
 func (s *Server) UnlinkMyCouple(c *gin.Context) {
-	session, err := s.auth.GetSession(c.Request)
-	if err != nil || session == nil {
-		c.JSON(http.StatusUnauthorized, apigen.Unauthorized{Message: "unauthorized"})
+	userID, ok := s.authenticate(c)
+	if !ok {
 		return
 	}
-	userID := uuid.MustParse(session.User.ID.(string))
 
 	var link models.CoupleLink
 	if err := s.db.Where("(requester_id = ? OR partner_id = ?) AND status = ?", userID, userID, models.Accepted).First(&link).Error; err != nil {
@@ -236,7 +231,7 @@ func (s *Server) UnlinkMyCouple(c *gin.Context) {
 	now := time.Now()
 	link.Status = models.Unlinked // Added state for unlinked couples
 	link.RespondedAt = &now
-	
+
 	if err := s.db.Save(&link).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, apigen.Error{Message: "failed to unlink couple"})
 		return

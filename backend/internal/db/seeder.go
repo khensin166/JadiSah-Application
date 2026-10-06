@@ -2,6 +2,7 @@ package db
 
 import (
 	"log"
+	"os"
 
 	"github.com/khensin166/JadiSah-Application/backend/internal/models"
 	"gorm.io/gorm"
@@ -80,6 +81,25 @@ func SeedRolesAndPermissions(db *gorm.DB) error {
 		// GORM: Replace association (menghapus yang tidak ada di list baru, menambah yang belum ada)
 		if err := db.Model(&roleToUpdate).Association("Permissions").Replace(permsToAssign); err != nil {
 			return err
+		}
+	}
+
+	// 4. Assign SUPER_ADMIN to specific email if configured
+	superAdminEmail := os.Getenv("SUPER_ADMIN_EMAIL")
+	if superAdminEmail != "" {
+		var user models.User
+		if err := db.Where("email = ?", superAdminEmail).First(&user).Error; err == nil {
+			var superAdminRole models.Role
+			db.Where("name = ?", "SUPER_ADMIN").First(&superAdminRole)
+
+			// Assign role using GORM association (Append ignores duplicates automatically if configured properly, but to be safe we can use Append)
+			if err := db.Model(&user).Association("Roles").Append(&superAdminRole); err != nil {
+				log.Printf("Failed to grant SUPER_ADMIN to %s: %v\n", superAdminEmail, err)
+			} else {
+				log.Printf("Granted SUPER_ADMIN to %s\n", superAdminEmail)
+			}
+		} else {
+			log.Printf("SUPER_ADMIN_EMAIL (%s) not found in users table yet.\n", superAdminEmail)
 		}
 	}
 

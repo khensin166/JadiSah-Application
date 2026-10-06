@@ -1,0 +1,19 @@
+meta {
+  name: List Roles
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{url}}/api/admin/roles
+  body: none
+  auth: bearer
+}
+
+headers {
+  Origin: {{url}}
+}
+
+auth:bearer {
+  token: {{token}}
+}

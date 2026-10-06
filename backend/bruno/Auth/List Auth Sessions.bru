@@ -1,0 +1,19 @@
+meta {
+  name: List Auth Sessions
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{url}}/api/auth/sessions
+  body: none
+  auth: bearer
+}
+
+headers {
+  Origin: {{url}}
+}
+
+auth:bearer {
+  token: {{token}}
+}

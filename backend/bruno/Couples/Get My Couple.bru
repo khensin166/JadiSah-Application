@@ -1,0 +1,19 @@
+meta {
+  name: Get My Couple
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{url}}/api/couples/me
+  body: none
+  auth: bearer
+}
+
+headers {
+  Origin: {{url}}
+}
+
+auth:bearer {
+  token: {{token}}
+}

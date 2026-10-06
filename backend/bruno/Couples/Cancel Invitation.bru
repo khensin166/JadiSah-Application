@@ -1,0 +1,19 @@
+meta {
+  name: Cancel Invitation
+  type: http
+  seq: 7
+}
+
+delete {
+  url: {{url}}/api/couples/invitations/{{invitationId}}
+  body: none
+  auth: bearer
+}
+
+headers {
+  Origin: {{url}}
+}
+
+auth:bearer {
+  token: {{token}}
+}
