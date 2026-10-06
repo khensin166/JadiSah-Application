@@ -159,5 +159,5 @@ Langkah-langkah yang **sudah** dan **akan** kita kerjakan:
   - Auth & permission check per-handler via `Server.authorize(c, "<permission>")` (Limen session + RBAC lookup).
 - [x] **Langkah 4: Seeding Data (RBAC)**
   - `internal/db/seeder.go` (`SeedRolesAndPermissions`) dijalankan otomatis & idempotent saat startup.
-- [ ] **Langkah 5: Pengujian Terintegrasi (Bruno / E2E)**
+- [x] **Langkah 5: Pengujian Terintegrasi (Bruno / E2E)**
   - Coba integrasi Auth, pendaftaran akun, dan relasi couple dengan tool API Client seperti Bruno atau cURL.

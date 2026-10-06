@@ -42,10 +42,8 @@ func (s *Server) GetMyProfile(c *gin.Context) {
 	var coupleLink models.CoupleLink
 	partnerInfo := (*apigen.UserSummary)(nil)
 
-	var err error
-
 	// Query ACCEPTED links where user is either requester or partner
-	err = s.db.Preload("Requester").Preload("Partner").
+	err := s.db.Preload("Requester").Preload("Partner").
 		Where("(requester_id = ? OR partner_id = ?) AND status = ?", user.ID, user.ID, models.Accepted).
 		First(&coupleLink).Error
 

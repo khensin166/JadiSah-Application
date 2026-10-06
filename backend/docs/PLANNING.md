@@ -5,7 +5,7 @@
 - [x] Inisialisasi file spesifikasi dasar `api/openapi.yaml`.
 - [x] Setup *tooling*: `oapi-codegen` dan integrasi Swagger UI.
 - [x] Setup Limen Auth dan Adapter GORM.
-- [ ] Buat pengujian API pertama menggunakan Bruno.
+- [x] Buat pengujian API pertama menggunakan Bruno.
 - [ ] Setup struktur CI untuk Automated Integration Tests.
 
 ## Fase 2: Database & IAM RBAC
