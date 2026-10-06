@@ -1,5 +1,5 @@
 import React from 'react';
-import { Users, DollarSign, Briefcase, CalendarCheck, TrendingUp, CheckCircle2, Clock, XCircle } from 'lucide-react';
+import { Users, DollarSign, Briefcase, CalendarCheck, CheckCircle2 } from 'lucide-react';
 import { RSVPStats, BudgetStats } from '@/types/dashboard';
 import { 
   formatRupiah, 
@@ -7,6 +7,7 @@ import {
   calculateBudgetPercentage, 
   calculateRemainingBudget 
 } from '@/lib/dashboard-utils';
+import { Card } from '@/components/ui/card';
 
 interface StatsCardsProps {
   rsvp: RSVPStats;
@@ -20,152 +21,141 @@ export const StatsCards: React.FC<StatsCardsProps> = ({ rsvp, budget, totalEvent
   const remainingBudget = calculateRemainingBudget(budget.totalBudget, budget.totalSpent);
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
       {/* 1. Tamu & RSVP Card */}
-      <div className="relative overflow-hidden rounded-2xl border border-zinc-200/80 bg-white p-5 shadow-xs transition hover:shadow-md dark:border-zinc-800 dark:bg-zinc-900">
-        <div className="flex items-center justify-between">
-          <span className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
-            Tamu &amp; RSVP
-          </span>
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-rose-50 text-rose-600 dark:bg-rose-950 dark:text-rose-400">
-            <Users className="h-5 w-5" />
+      <Card className="p-5 rounded-2xl bg-ivory-50 border border-champagne-light/70 soft-shadow flex flex-col justify-between">
+        <div>
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-[10px] uppercase tracking-widest text-champagne-dark font-semibold">
+              Tamu &amp; RSVP
+            </span>
+            <span className="w-8 h-8 rounded-full bg-champagne-soft border border-champagne-light/50 flex items-center justify-center text-champagne-dark">
+              <Users className="w-4 h-4" />
+            </span>
+          </div>
+
+          <div>
+            <div className="flex items-baseline gap-1.5">
+              <span className="font-cormorant text-3xl font-semibold text-charcoal-900">
+                {rsvp.attending}
+              </span>
+              <span className="text-xs text-charcoal-500 font-normal">
+                / {rsvp.totalInvited} undangan
+              </span>
+            </div>
+            <p className="text-[11px] text-charcoal-500 mt-0.5">Tingkat konfirmasi kehadiran</p>
+
+            <div className="w-full bg-ivory-200 h-1.5 rounded-full overflow-hidden mt-3 flex">
+              <div className="bg-sage h-full rounded-full transition-all duration-500" style={{ width: `${rsvpPercentage}%` }} />
+            </div>
           </div>
         </div>
 
-        <div className="mt-3 flex items-baseline gap-2">
-          <span className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-white">
-            {rsvp.attending}
-          </span>
-          <span className="text-xs text-zinc-500">
-            dari {rsvp.totalInvited} undangan
-          </span>
+        <div className="mt-4 pt-2.5 border-t border-champagne-light/40 flex items-center justify-between text-[10px] text-charcoal-500">
+          <span className="text-sage-dark font-medium">{rsvp.attending} Hadir</span>
+          <span>&bull;</span>
+          <span>{rsvp.pending} Menunggu</span>
+          <span>&bull;</span>
+          <span>{rsvp.declined} Berhalangan</span>
         </div>
+      </Card>
 
-        {/* Progress bar */}
-        <div className="mt-3">
-          <div className="flex items-center justify-between text-[11px] text-zinc-500 mb-1">
-            <span>Konfirmasi Hadir</span>
-            <span className="font-semibold text-rose-600">{rsvpPercentage}%</span>
+      {/* 2. Anggaran Terpakai Card */}
+      <Card className="p-5 rounded-2xl bg-ivory-50 border border-champagne-light/70 soft-shadow flex flex-col justify-between">
+        <div>
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-[10px] uppercase tracking-widest text-champagne-dark font-semibold">
+              Anggaran Disbursed
+            </span>
+            <span className="w-8 h-8 rounded-full bg-champagne-soft border border-champagne-light/50 flex items-center justify-center text-champagne-dark">
+              <DollarSign className="w-4 h-4" />
+            </span>
           </div>
-          <div className="h-2 w-full overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800">
-            <div 
-              className="h-full rounded-full bg-gradient-to-r from-rose-500 to-pink-500 transition-all duration-500" 
-              style={{ width: `${rsvpPercentage}%` }}
-            />
-          </div>
-        </div>
 
-        {/* Sub-pills */}
-        <div className="mt-3.5 flex items-center justify-between border-t border-zinc-100 pt-3 text-[11px] dark:border-zinc-800/80">
-          <span className="flex items-center gap-1 text-emerald-600 font-medium">
-            <CheckCircle2 className="h-3.5 w-3.5" /> {rsvp.attending} Hadir
-          </span>
-          <span className="flex items-center gap-1 text-amber-600 font-medium">
-            <Clock className="h-3.5 w-3.5" /> {rsvp.pending} Menunggu
-          </span>
-          <span className="flex items-center gap-1 text-zinc-400 font-medium">
-            <XCircle className="h-3.5 w-3.5" /> {rsvp.declined} Batal
-          </span>
-        </div>
-      </div>
+          <div>
+            <p className="font-cormorant text-2xl sm:text-3xl font-semibold text-charcoal-900 truncate">
+              {formatRupiah(budget.totalSpent)}
+            </p>
+            <p className="text-[11px] text-charcoal-500 mt-0.5">
+              Pagu Limit: {formatRupiah(budget.totalBudget)}
+            </p>
 
-      {/* 2. Anggaran Card */}
-      <div className="relative overflow-hidden rounded-2xl border border-zinc-200/80 bg-white p-5 shadow-xs transition hover:shadow-md dark:border-zinc-800 dark:bg-zinc-900">
-        <div className="flex items-center justify-between">
-          <span className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
-            Anggaran Terpakai
-          </span>
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-50 text-amber-600 dark:bg-amber-950 dark:text-amber-400">
-            <DollarSign className="h-5 w-5" />
+            <div className="w-full bg-ivory-200 h-1.5 rounded-full overflow-hidden mt-3">
+              <div
+                className="bg-champagne h-full rounded-full transition-all duration-500"
+                style={{ width: `${Math.min(budgetPercentage, 100)}%` }}
+              />
+            </div>
           </div>
         </div>
 
-        <div className="mt-3">
-          <span className="text-2xl sm:text-3xl font-bold tracking-tight text-zinc-900 dark:text-white">
-            {formatRupiah(budget.totalSpent)}
-          </span>
-          <p className="text-xs text-zinc-500 mt-0.5">
-            Total Target: {formatRupiah(budget.totalBudget)}
-          </p>
-        </div>
-
-        {/* Progress bar */}
-        <div className="mt-3">
-          <div className="flex items-center justify-between text-[11px] text-zinc-500 mb-1">
-            <span>Realisasi</span>
-            <span className="font-semibold text-amber-600">{budgetPercentage}%</span>
-          </div>
-          <div className="h-2 w-full overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800">
-            <div 
-              className="h-full rounded-full bg-gradient-to-r from-amber-400 to-amber-500 transition-all duration-500" 
-              style={{ width: `${budgetPercentage}%` }}
-            />
-          </div>
-        </div>
-
-        <div className="mt-3.5 flex items-center justify-between border-t border-zinc-100 pt-3 text-[11px] text-zinc-500 dark:border-zinc-800/80">
-          <span>Sisa Anggaran:</span>
-          <span className="font-semibold text-emerald-600 dark:text-emerald-400">
-            {formatRupiah(remainingBudget)}
-          </span>
-        </div>
-      </div>
-
-      {/* 3. Kategori Pengeluaran & Vendor */}
-      <div className="relative overflow-hidden rounded-2xl border border-zinc-200/80 bg-white p-5 shadow-xs transition hover:shadow-md dark:border-zinc-800 dark:bg-zinc-900">
-        <div className="flex items-center justify-between">
-          <span className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
-            Kategori Vendor
-          </span>
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 dark:bg-indigo-950 dark:text-indigo-400">
-            <Briefcase className="h-5 w-5" />
-          </div>
-        </div>
-
-        <div className="mt-3 flex items-baseline gap-2">
-          <span className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-white">
-            {budget.categories.length}
-          </span>
-          <span className="text-xs text-zinc-500">Kategori Aktif</span>
-        </div>
-
-        <p className="mt-1 text-xs text-zinc-500">
-          Gedung, Catering, MUA, Foto, Dekorasi
+        <p className="text-[10px] text-sage-dark font-medium mt-4 pt-2.5 border-t border-champagne-light/40">
+          Sisa Alokasi: {formatRupiah(remainingBudget)}
         </p>
+      </Card>
 
-        <div className="mt-6 flex items-center gap-1.5 text-xs text-indigo-600 font-medium">
-          <TrendingUp className="h-3.5 w-3.5" />
-          <span>Semua vendor utama terkontrak</span>
-        </div>
-      </div>
+      {/* 3. Kategori Vendor Card */}
+      <Card className="p-5 rounded-2xl bg-ivory-50 border border-champagne-light/70 soft-shadow flex flex-col justify-between">
+        <div>
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-[10px] uppercase tracking-widest text-champagne-dark font-semibold">
+              Vendor Atelier
+            </span>
+            <span className="w-8 h-8 rounded-full bg-champagne-soft border border-champagne-light/50 flex items-center justify-center text-champagne-dark">
+              <Briefcase className="w-4 h-4" />
+            </span>
+          </div>
 
-      {/* 4. Rangkaian Acara */}
-      <div className="relative overflow-hidden rounded-2xl border border-zinc-200/80 bg-white p-5 shadow-xs transition hover:shadow-md dark:border-zinc-800 dark:bg-zinc-900">
-        <div className="flex items-center justify-between">
-          <span className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
-            Rangkaian Acara
-          </span>
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400">
-            <CalendarCheck className="h-5 w-5" />
+          <div>
+            <p className="font-cormorant text-3xl font-semibold text-charcoal-900">
+              {budget.categories.length} Pos
+            </p>
+            <p className="text-[11px] text-charcoal-500 mt-0.5 truncate">
+              Gedung, Catering, MUA, Foto, Dekor
+            </p>
+
+            <div className="w-full bg-ivory-200 h-1.5 rounded-full overflow-hidden mt-3">
+              <div className="bg-champagne-dark h-full rounded-full" style={{ width: '80%' }} />
+            </div>
           </div>
         </div>
 
-        <div className="mt-3 flex items-baseline gap-2">
-          <span className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-white">
-            {totalEvents}
-          </span>
-          <span className="text-xs text-zinc-500">Sesi Terjadwal</span>
-        </div>
-
-        <p className="mt-1 text-xs text-zinc-500">
-          Akad Nikah, Resepsi Siang &amp; Resepsi Malam
+        <p className="text-[10px] text-champagne-dark font-medium mt-4 pt-2.5 border-t border-champagne-light/40">
+          5 dari 5 Pos Kontrak Disetujui
         </p>
+      </Card>
 
-        <div className="mt-6 flex items-center gap-1.5 text-xs text-emerald-600 font-medium">
-          <CheckCircle2 className="h-3.5 w-3.5" />
-          <span>Jadwal rundown sudah siap</span>
+      {/* 4. Rangkaian Acara Card */}
+      <Card className="p-5 rounded-2xl bg-ivory-50 border border-champagne-light/70 soft-shadow flex flex-col justify-between">
+        <div>
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-[10px] uppercase tracking-widest text-champagne-dark font-semibold">
+              Master Rundown
+            </span>
+            <span className="w-8 h-8 rounded-full bg-champagne-soft border border-champagne-light/50 flex items-center justify-center text-champagne-dark">
+              <CalendarCheck className="w-4 h-4" />
+            </span>
+          </div>
+
+          <div>
+            <p className="font-cormorant text-3xl font-semibold text-charcoal-900">
+              {totalEvents} Sesi
+            </p>
+            <p className="text-[11px] text-charcoal-500 mt-0.5 truncate">
+              Akad, Temu Manten &amp; Resepsi
+            </p>
+
+            <div className="w-full bg-ivory-200 h-1.5 rounded-full overflow-hidden mt-3">
+              <div className="bg-sage h-full rounded-full" style={{ width: '100%' }} />
+            </div>
+          </div>
         </div>
-      </div>
+
+        <p className="text-[10px] text-charcoal-500 mt-4 pt-2.5 border-t border-champagne-light/40 flex items-center gap-1.5">
+          <CheckCircle2 className="w-3.5 h-3.5 text-sage" />
+          <span>Seluruh sesi telah terjadwal rapi</span>
+        </p>
+      </Card>
     </div>
   );
 };
