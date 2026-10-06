@@ -11,13 +11,11 @@ import { WeddingSummary } from '@/types/dashboard';
 interface DashboardHeaderProps {
   wedding: WeddingSummary;
   activeTab: string;
-  onToggleSidebar: () => void;
 }
 
 export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
   wedding,
   activeTab,
-  onToggleSidebar,
 }) => {
   const tabTitles: Record<string, { title: string; subtitle: string }> = {
     overview: {

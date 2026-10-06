@@ -26,8 +26,9 @@ export function useAuth() {
       }
       router.push(target);
       router.refresh();
-    } catch (err: any) {
-      setErrorMsg(err.message || "Terjadi kesalahan saat menghubungi server.");
+    } catch (err: unknown) {
+      const error = err instanceof Error ? err : new Error(String(err))
+      setErrorMsg(error.message || "Terjadi kesalahan saat menghubungi server.");
     } finally {
       setIsLoading(false);
     }
@@ -39,8 +40,9 @@ export function useAuth() {
       await authService.logout();
       router.push("/login");
       router.refresh();
-    } catch (err: any) {
-      console.error("Logout failed", err);
+    } catch (err: unknown) {
+      const error = err instanceof Error ? err : new Error(String(err))
+      console.error("Logout failed", error);
     } finally {
       setIsLoading(false);
     }

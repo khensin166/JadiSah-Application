@@ -12,13 +12,14 @@ interface CountdownBannerProps {
 
 export const CountdownBanner: React.FC<CountdownBannerProps> = ({ wedding }) => {
   const [copied, setCopied] = useState(false);
-  const [mounted, setMounted] = useState(false);
   const [countdown, setCountdown] = useState<CountdownTimeRemaining>(() =>
     calculateDetailedCountdown(wedding.weddingDate)
   );
 
   useEffect(() => {
-    setMounted(true);
+    // Initial update
+    setCountdown(calculateDetailedCountdown(wedding.weddingDate));
+    
     // Update countdown every second
     const timer = setInterval(() => {
       setCountdown(calculateDetailedCountdown(wedding.weddingDate));
@@ -112,8 +113,8 @@ export const CountdownBanner: React.FC<CountdownBannerProps> = ({ wedding }) => 
           <div className="grid grid-cols-4 gap-2 sm:gap-2.5 w-full text-center">
             {/* Hari */}
             <div className="bg-champagne-soft/70 p-2 sm:p-2.5 rounded-xl border border-champagne-light flex flex-col items-center justify-center min-w-[56px]" suppressHydrationWarning>
-              <span className="font-cormorant text-2xl sm:text-3xl font-bold text-charcoal-900 block leading-tight">
-                {mounted ? countdown.days : "--"}
+              <span className="font-cormorant text-2xl sm:text-3xl font-bold text-charcoal-900 block leading-tight" suppressHydrationWarning>
+                {countdown.days}
               </span>
               <span className="text-[9px] uppercase tracking-wider text-champagne-dark font-semibold mt-0.5">
                 Hari
@@ -122,8 +123,8 @@ export const CountdownBanner: React.FC<CountdownBannerProps> = ({ wedding }) => 
 
             {/* Jam */}
             <div className="bg-champagne-soft/70 p-2 sm:p-2.5 rounded-xl border border-champagne-light flex flex-col items-center justify-center min-w-[56px]" suppressHydrationWarning>
-              <span className="font-cormorant text-2xl sm:text-3xl font-bold text-charcoal-900 block leading-tight">
-                {mounted ? String(countdown.hours).padStart(2, '0') : "--"}
+              <span className="font-cormorant text-2xl sm:text-3xl font-bold text-charcoal-900 block leading-tight" suppressHydrationWarning>
+                {String(countdown.hours).padStart(2, '0')}
               </span>
               <span className="text-[9px] uppercase tracking-wider text-champagne-dark font-semibold mt-0.5">
                 Jam
@@ -132,8 +133,8 @@ export const CountdownBanner: React.FC<CountdownBannerProps> = ({ wedding }) => 
 
             {/* Menit */}
             <div className="bg-champagne-soft/70 p-2 sm:p-2.5 rounded-xl border border-champagne-light flex flex-col items-center justify-center min-w-[56px]" suppressHydrationWarning>
-              <span className="font-cormorant text-2xl sm:text-3xl font-bold text-charcoal-900 block leading-tight">
-                {mounted ? String(countdown.minutes).padStart(2, '0') : "--"}
+              <span className="font-cormorant text-2xl sm:text-3xl font-bold text-charcoal-900 block leading-tight" suppressHydrationWarning>
+                {String(countdown.minutes).padStart(2, '0')}
               </span>
               <span className="text-[9px] uppercase tracking-wider text-champagne-dark font-semibold mt-0.5">
                 Menit
@@ -142,8 +143,8 @@ export const CountdownBanner: React.FC<CountdownBannerProps> = ({ wedding }) => 
 
             {/* Detik */}
             <div className="bg-champagne-soft/70 p-2 sm:p-2.5 rounded-xl border border-champagne-light flex flex-col items-center justify-center min-w-[56px]" suppressHydrationWarning>
-              <span className="font-cormorant text-2xl sm:text-3xl font-bold text-champagne-dark block leading-tight">
-                {mounted ? String(countdown.seconds).padStart(2, '0') : "--"}
+              <span className="font-cormorant text-2xl sm:text-3xl font-bold text-champagne-dark block leading-tight" suppressHydrationWarning>
+                {String(countdown.seconds).padStart(2, '0')}
               </span>
               <span className="text-[9px] uppercase tracking-wider text-champagne-dark font-semibold mt-0.5">
                 Detik

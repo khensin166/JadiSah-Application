@@ -24,7 +24,6 @@ import {
 
 export default function DashboardPage() {
   const [activeTab, setActiveTab] = useState('overview');
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   // Lifted state for Rundown Events and Preparation Checklist
   const [events, setEvents] = useState<WeddingEventItem[]>(mockEvents);
@@ -76,7 +75,6 @@ export default function DashboardPage() {
         <DashboardHeader
           wedding={mockWedding}
           activeTab={activeTab}
-          onToggleSidebar={() => setIsSidebarOpen(true)}
         />
 
         {/* Scrollable Dashboard Body */}
