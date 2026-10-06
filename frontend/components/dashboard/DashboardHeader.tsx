@@ -2,8 +2,9 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { Menu, Bell, ExternalLink, Search } from 'lucide-react';
+import { Bell, ExternalLink, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { SidebarTrigger } from '@/components/ui/sidebar';
 import { Input } from '@/components/ui/input';
 import { WeddingSummary } from '@/types/dashboard';
 
@@ -47,13 +48,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
     <header className="sticky top-0 z-30 flex h-20 w-full items-center justify-between border-b border-champagne-light/60 bg-ivory-50/90 px-4 sm:px-8 backdrop-blur-md">
       {/* Left: Mobile Toggle & Breadcrumbs */}
       <div className="flex items-center gap-3 sm:gap-4">
-        <button
-          onClick={onToggleSidebar}
-          className="rounded-xl border border-champagne-light p-2 text-charcoal-800 hover:bg-ivory-200 lg:hidden transition"
-          aria-label="Buka Menu Sidebar"
-        >
-          <Menu className="h-5 w-5" />
-        </button>
+        <SidebarTrigger className="-ml-1 mr-2 text-charcoal-800 hover:bg-champagne/20" />
 
         <div className="flex flex-col">
           <div className="hidden sm:flex items-center gap-2 text-xs text-charcoal-500 font-medium">

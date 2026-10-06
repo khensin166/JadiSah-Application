@@ -10,6 +10,7 @@ import { BudgetOverviewCard } from '@/components/dashboard/BudgetOverviewCard';
 import { TimelineChecklist } from '@/components/dashboard/TimelineChecklist';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { SidebarProvider } from '@/components/ui/sidebar';
 import { WeddingEventItem, ChecklistTask } from '@/types/dashboard';
 import {
   mockUser,
@@ -55,15 +56,16 @@ export default function DashboardPage() {
   const checklistProgress = `${completedTasksCount}/${checklist.length}`;
 
   return (
-    <div className="flex min-h-screen bg-ivory-100 font-sans text-charcoal-800 antialiased selection:bg-champagne-light selection:text-charcoal-900">
+    <SidebarProvider
+      style={{ "--sidebar-width": "18rem", "--sidebar-width-icon": "4rem" } as React.CSSProperties}
+      className="flex min-h-screen bg-ivory-100 font-sans text-charcoal-800 antialiased selection:bg-champagne-light selection:text-charcoal-900"
+    >
       {/* 1. Left Sidebar Navigation (Desktop & Mobile Drawer) */}
       <DashboardSidebar
         user={mockUser}
         wedding={mockWedding}
         activeTab={activeTab}
         onTabChange={setActiveTab}
-        isOpen={isSidebarOpen}
-        onClose={() => setIsSidebarOpen(false)}
         totalEvents={events.length}
         checklistProgress={checklistProgress}
       />
@@ -202,6 +204,6 @@ export default function DashboardPage() {
           </div>
         </footer>
       </div>
-    </div>
+    </SidebarProvider>
   );
 }
