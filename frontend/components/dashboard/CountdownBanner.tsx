@@ -17,9 +17,6 @@ export const CountdownBanner: React.FC<CountdownBannerProps> = ({ wedding }) => 
   );
 
   useEffect(() => {
-    // Initial update
-    setCountdown(calculateDetailedCountdown(wedding.weddingDate));
-    
     // Update countdown every second
     const timer = setInterval(() => {
       setCountdown(calculateDetailedCountdown(wedding.weddingDate));

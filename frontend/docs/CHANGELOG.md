@@ -1,5 +1,23 @@
 # Frontend Changelog
 
+- Refactored **Dashboard Sidebar with Shadcn UI Primitives**:
+  - Adopted `SidebarProvider`, `Sidebar`, `SidebarContent`, `SidebarMenu`, `SidebarMenuItem`, `SidebarMenuButton` from shadcn/ui.
+  - Retained the signature Éternel Atelier brand header, couple info card (*Atelier Pernikahan*), quick links (*Tautan Cepat*), and active menu item styling.
+  - Added `suppressHydrationWarning` on `SidebarMenuButton` to prevent browser extension attribute hydration warnings (`fdprocessedid`).
+- Mapped **Shadcn UI CSS Semantic Tokens** in `globals.css`:
+  - Mapped `--background`, `--foreground`, `--primary`, `--sidebar-background`, `--sidebar-primary`, etc., directly to Éternel Atelier hex codes (`#FAF6EE`, `#1C1C1A`, `#C5A880`, etc.).
+- Enhanced **Login & Authentication UX**:
+  - Integrated `TooltipProvider` and `Tooltip` on password input fields to provide security criteria hints.
+  - Implemented role-based login redirection logic (`USER`, `ADMIN`, `SUPER_ADMIN`).
+- Fixed **CI/CD Pipeline ESLint Errors**:
+  - Fixed synchronous `setMounted` call inside `useEffect` in `CountdownBanner.tsx`.
+  - Wrapped `setIsMobile` state updates in an `onChange` listener in `use-mobile.ts`.
+  - Replaced unsafe `any` types with `unknown` and `Record<string, unknown>` in `use-auth.ts` and `api-client.ts`.
+  - Removed unused state and parameters in `dashboard/page.tsx` and `DashboardHeader.tsx`.
+- Configured **Kubernetes Infrastructure Networking**:
+  - Configured Next.js rewrites in `next.config.ts` to proxy `/api/:path*` traffic seamlessly to backend services in Kubernetes (`http://backend-service.jadisah-staging.svc.cluster.local:8080`).
+  - Updated environment variables in `k8s-infra/kubernetes/staging/frontend-deployment.yml`.
+
 - Added **Live Real-Time Countdown (Hari : Jam : Menit : Detik)**:
   - Upgraded countdown from days-only to a 4-column structured grid (*Hari*, *Jam*, *Menit*, *Detik*) in [CountdownBanner.tsx](file:///Users/cdsm-kal02/Jadisah/JadiSah-Application/frontend/components/dashboard/CountdownBanner.tsx).
   - Implemented `calculateDetailedCountdown` in [dashboard-utils.ts](file:///Users/cdsm-kal02/Jadisah/JadiSah-Application/frontend/lib/dashboard-utils.ts) with real-time `setInterval` updates every second.

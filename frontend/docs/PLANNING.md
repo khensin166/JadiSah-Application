@@ -7,7 +7,8 @@
 - [ ] Setup TanStack Query for API fetching.
 
 ## Phase 3 (Authentication)
-- [ ] Create Login & Register UI.
+- [x] Create Login & Register UI (with password tooltip helper).
+- [x] Support role-based login redirection (`USER`, `ADMIN`, `SUPER_ADMIN`).
 - [ ] Setup context for User Session.
 
 ## Phase 4 (User Dashboard)

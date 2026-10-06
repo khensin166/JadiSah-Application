@@ -14,6 +14,7 @@
 - GORM models: `users`, `roles`, `permissions`, `user_roles`, `role_permissions`, `couple_links`, Limen tables.
 - Profile & couple-link handlers.
 - Local `.env` loading via `godotenv`.
+- Kubernetes internal service integration support: `http://backend-service.jadisah-staging.svc.cluster.local:8080` for Next.js rewrite proxies.
 - DBML schema (`docs/schema.dbml`) for ERD visualization.
 
 ### Changed

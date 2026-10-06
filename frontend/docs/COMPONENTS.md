@@ -38,8 +38,10 @@ Komponen dasar yang digunakan di seluruh aplikasi:
 Struktur tata letak dashboard `/dashboard` menggunakan pola Sidebar modern:
 
 1. **`DashboardSidebar`** (`components/dashboard/DashboardSidebar.tsx`)
-   - Navigasi samping (lebar 72 / 288px pada desktop, sliding drawer overlay pada mobile).
-   - Menampilkan logo brand JadiSah, info pasangan aktif & sisa hari akad, navigasi tab dengan badge counter (*Ringkasan*, *Tamu & RSVP*, *Anggaran*, *Jadwal*, *Checklist*), pintasan link undangan publik, dan profil singkat user di bagian footer sidebar.
+   - Navigasi samping berbasis shadcn/ui primitives (`SidebarProvider`, `Sidebar`, `SidebarContent`, `SidebarMenu`, `SidebarMenuItem`, `SidebarMenuButton`).
+   - Lebar 72 / 288px pada desktop, sliding drawer overlay pada mobile.
+   - Menampilkan logo brand JadiSah, info pasangan aktif & sisa hari akad (*Atelier Pernikahan*), navigasi tab dengan badge counter (*Ringkasan*, *Tamu & RSVP*, *Anggaran*, *Jadwal*, *Checklist*), pintasan link undangan publik (*Tautan Cepat*), dan profil singkat user di bagian footer sidebar.
+   - Dilengkapi `suppressHydrationWarning` untuk mencegah bentrok atribut otomatis dari browser extension.
 
 2. **`DashboardHeader`** (`components/dashboard/DashboardHeader.tsx`)
    - App bar atas dengan tombol toggle hamburger untuk mobile, judul & deskripsi tab aktif, kolom pencarian global (Input), tombol pratinjau undangan publik, dan notifikasi bell.
