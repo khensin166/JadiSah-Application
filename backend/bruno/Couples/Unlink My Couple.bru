@@ -1,0 +1,19 @@
+meta {
+  name: Unlink My Couple
+  type: http
+  seq: 2
+}
+
+delete {
+  url: {{url}}/api/couples/me
+  body: none
+  auth: bearer
+}
+
+headers {
+  Origin: {{url}}
+}
+
+auth:bearer {
+  token: {{token}}
+}

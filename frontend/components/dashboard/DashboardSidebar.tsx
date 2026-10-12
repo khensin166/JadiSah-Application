@@ -1,259 +1,250 @@
-'use client';
+"use client";
 
-import React from 'react';
-import Link from 'next/link';
+import React from "react";
+import Link from "next/link";
 import {
   LayoutDashboard,
   Users,
   DollarSign,
   Calendar,
   CheckSquare,
-  ExternalLink,
-  Settings,
-  X,
   LogOut,
+  Settings,
+  ChevronsUpDown,
+  ExternalLink,
   ChevronRight,
-} from 'lucide-react';
-import { UserSession, WeddingSummary } from '@/types/dashboard';
-import { calculateDaysRemaining } from '@/lib/dashboard-utils';
+} from "lucide-react";
+import { UserSession, WeddingSummary } from "@/types/dashboard";
+import { calculateDaysRemaining } from "@/lib/dashboard-utils";
+import { useAuth } from "@/hooks/use-auth";
+
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarMenuBadge,
+  SidebarSeparator,
+} from "@/components/ui/sidebar";
+
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface DashboardSidebarProps {
   user: UserSession;
   wedding: WeddingSummary;
   activeTab: string;
   onTabChange: (tab: string) => void;
-  isOpen: boolean;
-  onClose: () => void;
   totalEvents?: number;
   checklistProgress?: string;
 }
 
-export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
+export function DashboardSidebar({
   user,
   wedding,
   activeTab,
   onTabChange,
-  isOpen,
-  onClose,
   totalEvents = 3,
-  checklistProgress = '2/5',
-}) => {
+  checklistProgress = "2/5",
+  ...props
+}: DashboardSidebarProps & React.ComponentProps<typeof Sidebar>) {
+  const { logout } = useAuth();
   const daysRemaining = calculateDaysRemaining(wedding.weddingDate);
 
   const mainNavItems = [
     {
-      id: 'overview',
-      label: 'Ringkasan',
+      id: "overview",
+      label: "Ringkasan",
       icon: LayoutDashboard,
       badge: null,
     },
     {
-      id: 'guests',
-      label: 'Tamu & RSVP',
+      id: "guests",
+      label: "Tamu & RSVP",
       icon: Users,
-      badge: '350',
+      badge: "350",
     },
     {
-      id: 'budget',
-      label: 'Anggaran',
+      id: "budget",
+      label: "Anggaran",
       icon: DollarSign,
-      badge: '64%',
+      badge: "64%",
     },
     {
-      id: 'schedule',
-      label: 'Jadwal & Acara',
+      id: "schedule",
+      label: "Jadwal & Acara",
       icon: Calendar,
       badge: `${totalEvents} Sesi`,
     },
     {
-      id: 'checklist',
-      label: 'Checklist',
+      id: "checklist",
+      label: "Checklist",
       icon: CheckSquare,
       badge: checklistProgress,
     },
   ];
 
   return (
-    <>
-      {/* Mobile Backdrop */}
-      {isOpen && (
-        <div
-          className="fixed inset-0 z-40 bg-zinc-950/50 backdrop-blur-xs lg:hidden"
-          onClick={onClose}
-          aria-hidden="true"
-        />
-      )}
-
-      {/* Sidebar Container */}
-      <aside
-        className={`fixed top-0 bottom-0 left-0 z-50 flex w-72 flex-col border-r border-stone-200/70 bg-white transition-transform duration-300 ease-in-out lg:static lg:translate-x-0 ${
-          isOpen ? 'translate-x-0' : '-translate-x-full'
-        }`}
-      >
-        {/* 1. Header & Brand */}
-        <div className="flex h-20 items-center justify-between px-6 border-b border-champagne-light/50 bg-ivory-50">
-          <Link href="/dashboard" className="flex items-center gap-3 group">
-            <div className="flex h-11 w-11 items-center justify-center rounded-full border border-champagne bg-gradient-to-br from-ivory-50 to-ivory-200 text-champagne-dark font-serif text-2xl font-bold shadow-xs transition-transform group-hover:scale-105">
-              J
-            </div>
-            <div>
-              <span className="font-cormorant text-2xl tracking-[0.16em] uppercase font-semibold text-charcoal-900 leading-tight block">
-                JadiSah
-              </span>
-              <span className="block text-[9px] uppercase tracking-[0.28em] font-semibold text-champagne-dark">
-                Wedding Atelier
-              </span>
-            </div>
-          </Link>
-
-          {/* Mobile Close Button */}
-          <button
-            onClick={onClose}
-            className="rounded-lg p-1.5 text-charcoal-500 hover:bg-ivory-200 hover:text-charcoal-900 lg:hidden"
-            aria-label="Tutup Menu"
-          >
-            <X className="h-5 w-5" />
-          </button>
-        </div>
-
-        {/* 2. Couple & Countdown Box */}
-        <div className="p-4 bg-ivory-50 border-b border-champagne-light/50">
-          <div className="rounded-2xl border border-champagne-light/60 bg-ivory-100/90 p-3.5">
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] uppercase tracking-widest font-semibold text-champagne-dark">
-                Atelier Pernikahan
-              </span>
-              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-ivory-50 border border-champagne-light text-charcoal-700">
-                {user.role}
-              </span>
-            </div>
-            <p className="mt-1 font-serif font-bold text-base text-charcoal-900 truncate">
-              {wedding.brideName} &amp; {wedding.groomName}
-            </p>
-            <p className="text-[11px] text-champagne-dark font-serif italic">
-              {new Date(wedding.weddingDate).toLocaleDateString('id-ID', {
-                day: 'numeric',
-                month: 'long',
-                year: 'numeric',
-              })}
-            </p>
-            <div className="mt-2 flex items-center gap-1.5">
-              <span className="inline-block w-1.5 h-1.5 rounded-full bg-sage"></span>
-              <span className="text-[10px] text-charcoal-600 font-medium">
-                {daysRemaining} hari menuju hari-H
-              </span>
-            </div>
+    <Sidebar
+      collapsible="icon"
+      className="border-r border-champagne-light/60 [&_[data-sidebar=sidebar]]:bg-ivory-50 [&_[data-sidebar=sidebar]]:text-charcoal-800"
+      {...props}
+    >
+      <SidebarHeader className="px-5 pt-6 pb-4 group-data-[collapsible=icon]:px-2">
+        <Link href="/dashboard" className="flex items-center gap-3 group/logo">
+          <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-champagne-light via-champagne to-champagne-dark text-white font-cormorant text-2xl font-bold shadow-md ring-1 ring-champagne-dark/20 transition-transform duration-300 group-hover/logo:scale-105 group-hover/logo:rotate-3 group-data-[collapsible=icon]:size-8 group-data-[collapsible=icon]:text-lg">
+            J
           </div>
-        </div>
+          <div className="min-w-0 group-data-[collapsible=icon]:hidden">
+            <span className="block font-cormorant text-2xl font-semibold uppercase leading-none tracking-[0.16em] text-charcoal-900">
+              JadiSah.
+            </span>
+            <span className="mt-1 block text-[10px] uppercase tracking-[0.25em] text-champagne-dark">
+              Wedding Atelier
+            </span>
+          </div>
+        </Link>
+      </SidebarHeader>
 
-        {/* 3. Main Navigation */}
-        <div className="flex-1 overflow-y-auto px-3 py-4 space-y-1 bg-ivory-50">
-          <p className="px-3 pb-2 text-[10px] uppercase tracking-[0.2em] font-semibold text-champagne-dark">
-            Concierge Portal
-          </p>
+      <SidebarSeparator className="mx-5 bg-champagne-light/60 group-data-[collapsible=icon]:mx-2" />
 
-          <nav className="space-y-1">
-            {mainNavItems.map((item) => {
-              const Icon = item.icon;
-              const isActive = activeTab === item.id;
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => {
-                    onTabChange(item.id);
-                    if (window.innerWidth < 1024) onClose();
-                  }}
-                  className={`group flex w-full items-center justify-between rounded-xl px-3.5 py-2.5 text-xs font-medium transition-all ${
-                    isActive
-                      ? 'sidebar-active bg-ivory-200 text-charcoal-900 border-l-[3px] border-champagne font-semibold shadow-2xs'
-                      : 'text-charcoal-700 hover:bg-ivory-200/70 hover:text-charcoal-900'
-                  }`}
-                >
-                  <div className="flex items-center gap-3.5">
-                    <Icon
-                      className={`h-4 w-4 transition-colors ${
-                        isActive
-                          ? 'text-champagne-dark'
-                          : 'text-champagne-dark/70 group-hover:text-champagne-dark'
-                      }`}
-                    />
-                    <span>{item.label}</span>
-                  </div>
-
-                  {item.badge && (
-                    <span
-                      className={`rounded-full px-2 py-0.5 text-[10px] font-semibold transition-colors ${
-                        isActive
-                          ? 'bg-champagne-soft text-champagne-dark border border-champagne-light'
-                          : 'bg-ivory-200/80 text-charcoal-600'
-                      }`}
-                    >
-                      {item.badge}
-                    </span>
-                  )}
-                </button>
-              );
+      <SidebarContent className="px-3 pt-2 group-data-[collapsible=icon]:px-1">
+        {/* Atelier Card (Only visible when expanded) */}
+        <div className="mx-2 mb-4 mt-2 group-data-[collapsible=icon]:hidden rounded-2xl border border-champagne-light bg-champagne-soft/30 p-4 soft-shadow">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-[10px] font-semibold tracking-[0.15em] text-champagne-dark uppercase">
+              Atelier Pernikahan
+            </span>
+            <span className="rounded-full border border-champagne-light bg-white px-2 py-0.5 text-[9px] font-medium text-charcoal-700">
+              owner
+            </span>
+          </div>
+          <h3 className="font-cormorant text-lg font-bold text-charcoal-900 leading-tight">
+            {wedding.brideName} &amp; {wedding.groomName}
+          </h3>
+          <p className="mt-1 font-serif text-xs italic text-charcoal-500">
+            {new Date(wedding.weddingDate).toLocaleDateString('id-ID', {
+              day: 'numeric',
+              month: 'long',
+              year: 'numeric',
             })}
-          </nav>
-
-          <div className="my-4 border-t border-champagne-light/50" />
-
-          {/* Quick Shortcuts */}
-          <p className="px-3 pb-2 text-[10px] uppercase tracking-[0.2em] font-semibold text-champagne-dark">
-            Tautan Cepat
           </p>
-          <div className="space-y-1">
-            <Link
-              href={`/invitation/${wedding.slug}`}
-              target="_blank"
-              className="flex items-center justify-between rounded-xl px-3.5 py-2.5 text-xs font-medium text-charcoal-700 hover:bg-ivory-200/70 hover:text-charcoal-900 transition"
-            >
-              <div className="flex items-center gap-3.5">
-                <ExternalLink className="h-4 w-4 text-champagne-dark" />
-                <span>Undangan Publik</span>
-              </div>
-              <ChevronRight className="h-3.5 w-3.5 text-charcoal-400" />
-            </Link>
-
-            <button
-              onClick={() => onTabChange('overview')}
-              className="flex w-full items-center justify-between rounded-xl px-3.5 py-2.5 text-xs font-medium text-charcoal-700 hover:bg-ivory-200/70 hover:text-charcoal-900 transition"
-            >
-              <div className="flex items-center gap-3.5">
-                <Settings className="h-4 w-4 text-champagne-dark" />
-                <span>Pengaturan Acara</span>
-              </div>
-              <ChevronRight className="h-3.5 w-3.5 text-charcoal-400" />
-            </button>
+          <div className="mt-3 flex items-center gap-2 text-xs text-charcoal-700 font-medium">
+            <span className="size-2 rounded-full bg-sage-dark animate-pulse" />
+            <span>{daysRemaining} hari menuju hari-H</span>
           </div>
         </div>
 
-        {/* 4. Bottom User Footer */}
-        <div className="border-t border-champagne-light/50 bg-ivory-100/50 p-4 space-y-3">
-          <div className="p-3 rounded-2xl bg-ivory-50 border border-champagne-light flex items-center justify-between">
-            <div className="flex items-center gap-2.5 min-w-0">
-              <div className="w-8 h-8 rounded-full bg-champagne-soft border border-champagne-light flex items-center justify-center text-champagne-dark font-serif font-bold text-xs shrink-0">
-                {user.fullName.split(' ').map((n) => n[0]).slice(0, 2).join('')}
+        <SidebarGroup>
+          <SidebarGroupLabel className="text-[10px] font-semibold uppercase tracking-[0.2em] text-charcoal-500">
+            Concierge Portal
+          </SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu className="gap-1">
+              {mainNavItems.map((item) => (
+                <SidebarMenuItem key={item.id}>
+                  <SidebarMenuButton
+                    tooltip={item.label}
+                    isActive={activeTab === item.id}
+                    onClick={() => onTabChange(item.id)}
+                    className="relative h-10 rounded-lg px-3 text-sm text-charcoal-700 transition-all duration-200 hover:bg-champagne/15 hover:text-charcoal-900 data-[active=true]:bg-gradient-to-r data-[active=true]:from-champagne/30 data-[active=true]:to-champagne/5 data-[active=true]:font-semibold data-[active=true]:text-charcoal-900 data-[active=true]:shadow-xs data-[active=true]:before:absolute data-[active=true]:before:left-0 data-[active=true]:before:top-2 data-[active=true]:before:bottom-2 data-[active=true]:before:w-[3px] data-[active=true]:before:rounded-full data-[active=true]:before:bg-champagne-dark [&>svg]:text-champagne-dark"
+                  >
+                    <item.icon className="size-4" />
+                    <span>{item.label}</span>
+                  </SidebarMenuButton>
+                  {item.badge && (
+                    <SidebarMenuBadge className="top-2.5 rounded-full border border-champagne-light/70 bg-white/70 px-2 text-[10px] font-medium text-charcoal-600">
+                      {item.badge}
+                    </SidebarMenuBadge>
+                  )}
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <SidebarSeparator className="mx-5 my-2 bg-champagne-light/60 group-data-[collapsible=icon]:mx-2" />
+
+        <SidebarGroup>
+          <SidebarGroupLabel className="text-[10px] font-semibold uppercase tracking-[0.2em] text-charcoal-500">
+            Tautan Cepat
+          </SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu className="gap-1">
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  tooltip="Undangan Publik"
+                  className="relative h-10 rounded-lg px-3 text-sm text-charcoal-700 transition-all duration-200 hover:bg-champagne/15 hover:text-charcoal-900"
+                >
+                  <ExternalLink className="size-4" />
+                  <span>Undangan Publik</span>
+                  <ChevronRight className="ml-auto size-4 text-charcoal-400 group-data-[collapsible=icon]:hidden" />
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  tooltip="Pengaturan Acara"
+                  className="relative h-10 rounded-lg px-3 text-sm text-charcoal-700 transition-all duration-200 hover:bg-champagne/15 hover:text-charcoal-900"
+                >
+                  <Settings className="size-4" />
+                  <span>Pengaturan Acara</span>
+                  <ChevronRight className="ml-auto size-4 text-charcoal-400 group-data-[collapsible=icon]:hidden" />
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+      </SidebarContent>
+
+      <SidebarFooter className="p-3 group-data-[collapsible=icon]:p-1">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <SidebarMenuButton
+              size="lg"
+              tooltip={user.fullName}
+              className="h-auto w-full rounded-xl border border-champagne-light/60 bg-white/60 px-3 py-2.5 text-charcoal-800 shadow-xs transition-all hover:border-champagne hover:bg-white data-[state=open]:border-champagne data-[state=open]:bg-white group-data-[collapsible=icon]:border-transparent group-data-[collapsible=icon]:bg-transparent group-data-[collapsible=icon]:shadow-none"
+            >
+              <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-champagne to-champagne-dark font-cormorant text-base font-bold text-white group-data-[collapsible=icon]:size-8">
+                {user.fullName?.charAt(0).toUpperCase() ?? <Users className="size-4" />}
               </div>
-              <div className="truncate text-left">
-                <p className="truncate text-xs font-bold text-charcoal-900 leading-tight">
+              <div className="flex min-w-0 flex-1 flex-col items-start gap-1 text-left group-data-[collapsible=icon]:hidden">
+                <span className="w-full truncate text-sm font-semibold leading-tight text-charcoal-900">
                   {user.fullName}
-                </p>
-                <p className="truncate text-[10px] text-charcoal-500">{user.email}</p>
+                </span>
+                <span className="w-full truncate text-xs leading-tight text-champagne-dark">
+                  H - {daysRemaining} Hari
+                </span>
               </div>
-            </div>
-
-            <button
-              type="button"
-              className="p-1.5 rounded-full hover:bg-champagne-soft text-champagne-dark transition"
-              title="Keluar"
-              aria-label="Keluar dari akun"
+              <ChevronsUpDown className="ml-auto size-4 shrink-0 text-charcoal-500 group-data-[collapsible=icon]:hidden" />
+            </SidebarMenuButton>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent side="top" align="start" sideOffset={8} className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-xl border-champagne-light bg-ivory-50">
+            <DropdownMenuItem className="hover:bg-champagne/20 cursor-pointer text-charcoal-800">
+              <Settings className="mr-2 size-4" />
+              <span>Pengaturan</span>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator className="bg-champagne-light/50" />
+            <DropdownMenuItem 
+              onClick={logout}
+              className="text-red-600 focus:text-red-700 focus:bg-red-50 cursor-pointer"
             >
-              <LogOut className="h-4 w-4" />
-            </button>
-          </div>
-        </div>
-      </aside>
-    </>
+              <LogOut className="mr-2 size-4" />
+              <span>Keluar</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </SidebarFooter>
+    </Sidebar>
   );
-};
+}

@@ -1,0 +1,26 @@
+meta {
+  name: Set User Subscription
+  type: http
+  seq: 3
+}
+
+put {
+  url: {{url}}/api/admin/users/{{userId}}/subscription
+  body: json
+  auth: bearer
+}
+
+headers {
+  Origin: {{url}}
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "tier": "PREMIUM",
+    "expires_at": "2030-12-31T23:59:59Z"
+  }
+}

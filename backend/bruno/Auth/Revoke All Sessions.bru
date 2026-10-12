@@ -1,0 +1,19 @@
+meta {
+  name: Revoke All Sessions
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{url}}/api/auth/revoke-sessions
+  body: none
+  auth: bearer
+}
+
+headers {
+  Origin: {{url}}
+}
+
+auth:bearer {
+  token: {{token}}
+}

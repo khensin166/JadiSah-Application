@@ -1,0 +1,19 @@
+meta {
+  name: Reject Invitation
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{url}}/api/couples/invitations/{{invitationId}}/reject
+  body: none
+  auth: bearer
+}
+
+headers {
+  Origin: {{url}}
+}
+
+auth:bearer {
+  token: {{token}}
+}

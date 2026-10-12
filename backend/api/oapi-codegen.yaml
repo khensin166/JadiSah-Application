@@ -1,0 +1,13 @@
+# Konfigurasi oapi-codegen (dijalankan via `go generate ./...` dari folder backend/)
+# Docs: https://github.com/oapi-codegen/oapi-codegen
+package: apigen
+output: ../generated/api/server.gen.go
+generate:
+  gin-server: true
+  strict-server: true
+  models: true
+  embedded-spec: true
+output-options:
+  # Endpoint auth diimplementasikan oleh Limen — hanya didokumentasikan, tidak di-generate.
+  exclude-tags:
+    - auth

@@ -9,7 +9,14 @@
    go mod download
    ```
 
-2. **Environment Variables**
+2. **Code Generation (OpenAPI Contract-First)**
+   Setiap kali ada perubahan pada file `api/openapi.yaml`, Anda **wajib** melakukan generasi ulang kode:
+   ```bash
+   go install github.com/deepmap/oapi-codegen/v2/cmd/oapi-codegen@latest
+   oapi-codegen -package api api/openapi.yaml > generated/api/server.gen.go
+   ```
+
+3. **Environment Variables**
    Salin file `.env.example` ke `.env` dan sesuaikan koneksi database.
    ```env
    DB_HOST=localhost
@@ -20,8 +27,9 @@
    GIN_MODE=debug
    ```
 
-3. **Jalankan Server Lokal**
+4. **Jalankan Server Lokal**
    ```bash
-   go run main.go
+   go run cmd/server/main.go
    ```
    Server akan berjalan di http://localhost:8080.
+   Dokumentasi Swagger UI dapat diakses di http://localhost:8080/swagger.

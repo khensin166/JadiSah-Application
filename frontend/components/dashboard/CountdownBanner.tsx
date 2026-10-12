@@ -109,8 +109,8 @@ export const CountdownBanner: React.FC<CountdownBannerProps> = ({ wedding }) => 
 
           <div className="grid grid-cols-4 gap-2 sm:gap-2.5 w-full text-center">
             {/* Hari */}
-            <div className="bg-champagne-soft/70 p-2 sm:p-2.5 rounded-xl border border-champagne-light flex flex-col items-center justify-center min-w-[56px]">
-              <span className="font-cormorant text-2xl sm:text-3xl font-bold text-charcoal-900 block leading-tight">
+            <div className="bg-champagne-soft/70 p-2 sm:p-2.5 rounded-xl border border-champagne-light flex flex-col items-center justify-center min-w-[56px]" suppressHydrationWarning>
+              <span className="font-cormorant text-2xl sm:text-3xl font-bold text-charcoal-900 block leading-tight" suppressHydrationWarning>
                 {countdown.days}
               </span>
               <span className="text-[9px] uppercase tracking-wider text-champagne-dark font-semibold mt-0.5">
@@ -119,8 +119,8 @@ export const CountdownBanner: React.FC<CountdownBannerProps> = ({ wedding }) => 
             </div>
 
             {/* Jam */}
-            <div className="bg-champagne-soft/70 p-2 sm:p-2.5 rounded-xl border border-champagne-light flex flex-col items-center justify-center min-w-[56px]">
-              <span className="font-cormorant text-2xl sm:text-3xl font-bold text-charcoal-900 block leading-tight">
+            <div className="bg-champagne-soft/70 p-2 sm:p-2.5 rounded-xl border border-champagne-light flex flex-col items-center justify-center min-w-[56px]" suppressHydrationWarning>
+              <span className="font-cormorant text-2xl sm:text-3xl font-bold text-charcoal-900 block leading-tight" suppressHydrationWarning>
                 {String(countdown.hours).padStart(2, '0')}
               </span>
               <span className="text-[9px] uppercase tracking-wider text-champagne-dark font-semibold mt-0.5">
@@ -129,8 +129,8 @@ export const CountdownBanner: React.FC<CountdownBannerProps> = ({ wedding }) => 
             </div>
 
             {/* Menit */}
-            <div className="bg-champagne-soft/70 p-2 sm:p-2.5 rounded-xl border border-champagne-light flex flex-col items-center justify-center min-w-[56px]">
-              <span className="font-cormorant text-2xl sm:text-3xl font-bold text-charcoal-900 block leading-tight">
+            <div className="bg-champagne-soft/70 p-2 sm:p-2.5 rounded-xl border border-champagne-light flex flex-col items-center justify-center min-w-[56px]" suppressHydrationWarning>
+              <span className="font-cormorant text-2xl sm:text-3xl font-bold text-charcoal-900 block leading-tight" suppressHydrationWarning>
                 {String(countdown.minutes).padStart(2, '0')}
               </span>
               <span className="text-[9px] uppercase tracking-wider text-champagne-dark font-semibold mt-0.5">
@@ -139,8 +139,8 @@ export const CountdownBanner: React.FC<CountdownBannerProps> = ({ wedding }) => 
             </div>
 
             {/* Detik */}
-            <div className="bg-champagne-soft/70 p-2 sm:p-2.5 rounded-xl border border-champagne-light flex flex-col items-center justify-center min-w-[56px]">
-              <span className="font-cormorant text-2xl sm:text-3xl font-bold text-champagne-dark block leading-tight">
+            <div className="bg-champagne-soft/70 p-2 sm:p-2.5 rounded-xl border border-champagne-light flex flex-col items-center justify-center min-w-[56px]" suppressHydrationWarning>
+              <span className="font-cormorant text-2xl sm:text-3xl font-bold text-champagne-dark block leading-tight" suppressHydrationWarning>
                 {String(countdown.seconds).padStart(2, '0')}
               </span>
               <span className="text-[9px] uppercase tracking-wider text-champagne-dark font-semibold mt-0.5">

@@ -1,0 +1,31 @@
+meta {
+  name: Sign In
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{url}}/api/auth/signin/credential
+  body: json
+  auth: none
+}
+
+headers {
+  Origin: {{url}}
+}
+
+body:json {
+  {
+    "credential": "kenan@example.com",
+    "password": "Rahasia123!",
+    "remember_me": true
+  }
+}
+
+script:post-response {
+  let token = res.getHeader("set-auth-token");
+  if (token) {
+    bru.setEnvVar("token", token);
+  }
+  
+}

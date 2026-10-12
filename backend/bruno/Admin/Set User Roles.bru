@@ -1,0 +1,25 @@
+meta {
+  name: Set User Roles
+  type: http
+  seq: 2
+}
+
+put {
+  url: {{url}}/api/admin/users/{{userId}}/roles
+  body: json
+  auth: bearer
+}
+
+headers {
+  Origin: {{url}}
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "roles": ["ADMIN"]
+  }
+}

@@ -15,7 +15,7 @@ RUN go mod download
 COPY . .
 
 # Build binary yang ringan (CGO_ENABLED=0 agar binary bisa berjalan di Alpine Linux)
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-w -s" -o /app/server .
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-w -s" -o /app/server ./cmd/server
 
 # Stage 2: Runner - Image final yang sangat kecil dan aman
 FROM alpine:3.19

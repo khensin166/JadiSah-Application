@@ -1,0 +1,19 @@
+meta {
+  name: List Invitations
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{url}}/api/couples/invitations
+  body: none
+  auth: bearer
+}
+
+headers {
+  Origin: {{url}}
+}
+
+auth:bearer {
+  token: {{token}}
+}

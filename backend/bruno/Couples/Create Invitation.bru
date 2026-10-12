@@ -1,0 +1,25 @@
+meta {
+  name: Create Invitation
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{url}}/api/couples/invitations
+  body: json
+  auth: bearer
+}
+
+headers {
+  Origin: {{url}}
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "partner_email": "partner@example.com"
+  }
+}
