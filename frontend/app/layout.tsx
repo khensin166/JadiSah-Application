@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Cormorant_Garamond, Plus_Jakarta_Sans, Geist } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
+import { AuthProvider } from "@/context/auth-context";
 
 const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 
@@ -29,7 +30,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       lang="id"
       className={cn("h-full", "antialiased", cormorant.variable, jakarta.variable, "font-sans", geist.variable)}
     >
-      <body className="min-h-full flex flex-col font-sans bg-[#FAF6EE] text-[#242321]">{children}</body>
+      <body className="min-h-full flex flex-col font-sans bg-[#FAF6EE] text-[#242321]">
+        <AuthProvider>{children}</AuthProvider>
+      </body>
     </html>
   );
 }

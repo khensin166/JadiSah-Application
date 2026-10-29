@@ -1,5 +1,5 @@
 import { apiClient } from "../api-client";
-import type { LoginCredentials, RoleName, UserProfile, UserSession } from "../../types/auth";
+import type { LoginCredentials, RegisterPayload, RoleName, UserProfile, UserSession } from "../../types/auth";
 
 /**
  * Service to handle all authentication-related API calls.
@@ -16,6 +16,16 @@ export const authService = {
         password: credentials.password,
         remember_me: credentials.remember_me ?? true,
       }),
+    });
+  },
+
+  /**
+   * Registers a new account (Limen credential-password). Session cookie is set on success.
+   */
+  async register(payload: RegisterPayload): Promise<UserSession> {
+    return apiClient<UserSession>("/auth/signup/credential", {
+      method: "POST",
+      body: JSON.stringify({ email: payload.email, password: payload.password }),
     });
   },
 

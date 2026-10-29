@@ -1,5 +1,14 @@
 # Frontend Changelog
 
+- Implemented **Part 1: Auth Session Context, Route Protection & Register Page**:
+  - Created global `AuthProvider` and `useSession()` hook in `context/auth-context.tsx` fetching and caching the user profile via `GET /api/users/me` on app load.
+  - Connected `DashboardPage` and `DashboardSidebar` to dynamically display the active user profile (`currentUser`) from the session instead of static mock data.
+  - Implemented Route Protection via Next.js 16 `proxy.ts` (intercepts unauthenticated visits to `/dashboard` & `/admin` and redirects to `/login?next=...`, while bouncing logged-in users visiting `/login` or `/register`).
+  - Added `<RoleGuard>` component and configured `app/admin/layout.tsx` to strictly restrict `/admin` routes to `ADMIN` and `SUPER_ADMIN` users.
+  - Created Register page (`app/register/page.tsx`) matching the Éternel Atelier aesthetic with live password security criteria validation and password confirmation matching.
+  - Added `authService.register()` calling backend Limen `/api/auth/signup/credential`.
+  - Updated `package.json` test script to `"node --experimental-strip-types --test"` for seamless TypeScript unit testing (25/25 tests passing).
+
 - Refactored **Dashboard Sidebar with Shadcn UI Primitives**:
   - Adopted `SidebarProvider`, `Sidebar`, `SidebarContent`, `SidebarMenu`, `SidebarMenuItem`, `SidebarMenuButton` from shadcn/ui.
   - Retained the signature Éternel Atelier brand header, couple info card (*Atelier Pernikahan*), quick links (*Tautan Cepat*), and active menu item styling.

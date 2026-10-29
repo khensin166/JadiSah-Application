@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -115,9 +116,9 @@ export default function LoginPage() {
               
               <div className="text-center text-sm text-muted-foreground">
                 Don&apos;t have an account?{" "}
-                <a href="#" className="font-medium text-primary hover:underline">
+                <Link href="/register" className="font-medium text-primary hover:underline">
                   Sign up
-                </a>
+                </Link>
               </div>
             </CardFooter>
           </form>

@@ -11,7 +11,8 @@ import { TimelineChecklist } from '@/components/dashboard/TimelineChecklist';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { SidebarProvider } from '@/components/ui/sidebar';
-import { WeddingEventItem, ChecklistTask } from '@/types/dashboard';
+import { useSession } from '@/context/auth-context';
+import { WeddingEventItem, ChecklistTask, UserSession } from '@/types/dashboard';
 import {
   mockUser,
   mockWedding,
@@ -24,6 +25,17 @@ import {
 
 export default function DashboardPage() {
   const [activeTab, setActiveTab] = useState('overview');
+  const { user: profile } = useSession();
+
+  // Map profil backend ke shape UserSession yang dipakai komponen dashboard
+  const currentUser: UserSession = profile
+    ? {
+        id: profile.id,
+        fullName: [profile.first_name, profile.last_name].filter(Boolean).join(' ') || profile.email,
+        email: profile.email,
+        role: mockUser.role,
+      }
+    : mockUser;
 
   // Lifted state for Rundown Events and Preparation Checklist
   const [events, setEvents] = useState<WeddingEventItem[]>(mockEvents);
@@ -61,7 +73,7 @@ export default function DashboardPage() {
     >
       {/* 1. Left Sidebar Navigation (Desktop & Mobile Drawer) */}
       <DashboardSidebar
-        user={mockUser}
+        user={currentUser}
         wedding={mockWedding}
         activeTab={activeTab}
         onTabChange={setActiveTab}

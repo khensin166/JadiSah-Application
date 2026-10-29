@@ -9,7 +9,8 @@
 ## Phase 3 (Authentication)
 - [x] Create Login & Register UI (with password tooltip helper).
 - [x] Support role-based login redirection (`USER`, `ADMIN`, `SUPER_ADMIN`).
-- [ ] Setup context for User Session.
+- [x] Setup global context for User Session (`AuthProvider` & `useSession`) backed by `GET /api/users/me`.
+- [x] Implement Route Protection via Next.js 16 `proxy.ts` (protect `/dashboard`, `/admin`) and client-side `<RoleGuard>`.
 
 ## Phase 4 (User Dashboard)
 - [x] Create User Dashboard (`/dashboard`) with modern Sidebar layout (Desktop & Mobile Drawer).

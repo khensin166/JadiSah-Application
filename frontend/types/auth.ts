@@ -5,6 +5,11 @@ export interface LoginCredentials {
   remember_me?: boolean;
 }
 
+export interface RegisterPayload {
+  email: string;
+  password: string;
+}
+
 /** Role names as seeded by the backend (see backend/internal/db/seeder.go). */
 export type RoleName = "USER" | "ADMIN" | "SUPER_ADMIN";
 
