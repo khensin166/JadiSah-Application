@@ -32,7 +32,41 @@
 - [ ] Apply Vault's structural layout to `/dashboard`.
 
 ## Phase 6 (API Integration - IAM Auth & Users)
-- [ ] Create Login Page (`/login`) matching Vault's UI aesthetics.
-- [ ] Integrate Limen Auth `POST /api/auth/signin/credential` for Login.
-- [ ] Connect `GET /api/users/me` to display user profile in Dashboard Header/Sidebar.
-- [ ] Connect `GET /api/couples/me` to handle partner status in Dashboard.
+- [x] Create Login Page (`/login`) matching Vault's UI aesthetics.
+- [x] Integrate Limen Auth `POST /api/auth/signin/credential` for Login.
+- [x] Connect `GET /api/users/me` & `PATCH /api/users/me` to display and edit user profile in Dashboard Header/Sidebar/Modal.
+- [x] Connect `GET /api/couples/me`, `DELETE /api/couples/me`, and `/api/couples/invitations` to handle partner linking and invitations in Dashboard.
+
+## Phase 7 (Theme Variable System & Landing Page Refactoring) - [IN PROGRESS / APPROVED PLAN]
+- [ ] **Structured Theming Architecture (Colors & Assets as Variables)**:
+  - [ ] Define theme contracts in `types/theme.ts` (`ThemeConfig`, `ThemeColors`, `ThemeAssets`, `ThemeBranding`).
+  - [ ] Centralize semantic color tokens (canvas/background, primary, secondary, accent, text, border).
+  - [ ] Centralize image & asset slots (logo SVG/path, hero illustration/showcase, feature icons/badges, textures) so themes can be switched or customized easily.
+  - [ ] Implement default theme preset in `lib/theme/themes/eternel-atelier.ts` with helper getters in `lib/theme/index.ts`.
+  - [ ] Align CSS semantic custom properties in `app/globals.css` with the theme variable configuration.
+- [ ] **Reusable Component Decomposition for Landing Page (`components/landing/`)**:
+  - [ ] Create `LandingNavbar.tsx`: Responsive navigation with session awareness (displays "Masuk" / "Daftar" if unauthenticated, or "Buka Dashboard" if logged in) and dynamic logo from theme assets.
+  - [ ] Create `LandingHero.tsx`: Elegant Cormorant Garamond typography, value proposition, action buttons, and responsive theme showcase graphic.
+  - [ ] Create `LandingFeatures.tsx`: Modular feature grid reading feature items and badges dynamically from the theme config (no hardcoded rose/emerald colors).
+  - [ ] Create `LandingCTA.tsx`: Warm champagne luxury call-to-action banner for new couple signups.
+  - [ ] Create `LandingFooter.tsx`: Clean, standardized branding footer matching atelier aesthetics.
+- [ ] **Refactor Landing Page (`app/page.tsx`)**:
+  - [ ] Rewrite `app/page.tsx` into a concise, declarative orchestrator (<35 lines) composing the landing components.
+  - [ ] Eliminate all legacy hardcoded Tailwind classes (`rose-500`, `pink-500`, `zinc-900`) in favor of theme tokens.
+- [ ] **Verification & Testing**:
+  - [ ] Run `npm.cmd run lint` (ESLint clean).
+  - [ ] Run `npx.cmd tsc --noEmit` (TypeScript strict check).
+  - [ ] Run `npm.cmd test` (Unit tests passing).
+
+## Phase 8 (Admin Console UI - Backlog Pengembangan Selanjutnya)
+- [ ] **Admin Layout & Navigation (`/admin`)**:
+  - [ ] Dedicated Admin Sidebar with navigation: Overview, Users & Roles, Subscriptions, Audit Logs.
+  - [ ] Role indicator banner and Super Admin quick switch badge.
+- [ ] **Admin User Management**:
+  - [ ] User directory table connected to backend `GET /api/admin/users`.
+  - [ ] Search, filter by role (`USER`, `ADMIN`, `SUPER_ADMIN`), and status.
+  - [ ] Role Assignment modal via `POST /api/admin/roles/assign`.
+  - [ ] Subscription Tier modal (`FREE`, `PRO`, `ENTERPRISE`) via `PATCH /api/admin/subscriptions`.
+- [ ] **Audit Logs & Security Monitoring**:
+  - [ ] System activity and security log viewer connected to `GET /api/admin/audit-logs`.
+  - [ ] Filter by action, user ID, and timestamp.

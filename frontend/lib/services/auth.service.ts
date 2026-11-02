@@ -1,5 +1,12 @@
 import { apiClient } from "../api-client";
-import type { LoginCredentials, RegisterPayload, RoleName, UserProfile, UserSession } from "../../types/auth";
+import type {
+  LoginCredentials,
+  RegisterPayload,
+  RoleName,
+  UpdateProfilePayload,
+  UserProfile,
+  UserSession,
+} from "../../types/auth";
 
 /**
  * Service to handle all authentication-related API calls.
@@ -30,10 +37,20 @@ export const authService = {
   },
 
   /**
-   * Fetches the current user's profile (including roles).
+   * Fetches the current user's profile (including roles & partner).
    */
   async getProfile(): Promise<UserProfile> {
     return apiClient<UserProfile>("/users/me", { method: "GET" });
+  },
+
+  /**
+   * Updates the current user's first_name / last_name.
+   */
+  async updateProfile(payload: UpdateProfilePayload): Promise<{ message: string }> {
+    return apiClient<{ message: string }>("/users/me", {
+      method: "PATCH",
+      body: JSON.stringify(payload),
+    });
   },
 
   /**

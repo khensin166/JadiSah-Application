@@ -4,6 +4,8 @@ import React, { useState } from 'react';
 import { DashboardSidebar } from '@/components/dashboard/DashboardSidebar';
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
 import { CountdownBanner } from '@/components/dashboard/CountdownBanner';
+import { CoupleStatusBanner } from '@/components/dashboard/CoupleStatusBanner';
+import { CouplePartnerModal } from '@/components/dashboard/CouplePartnerModal';
 import { StatsCards } from '@/components/dashboard/StatsCards';
 import { RecentGuestsTable } from '@/components/dashboard/RecentGuestsTable';
 import { BudgetOverviewCard } from '@/components/dashboard/BudgetOverviewCard';
@@ -12,7 +14,9 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { useSession } from '@/context/auth-context';
-import { WeddingEventItem, ChecklistTask, UserSession } from '@/types/dashboard';
+import { useCouple } from '@/hooks/use-couple';
+import { WeddingEventItem, ChecklistTask, UserSession, WeddingSummary } from '@/types/dashboard';
+import type { UserSummary } from '@/types/auth';
 import {
   mockUser,
   mockWedding,
@@ -23,19 +27,52 @@ import {
   mockChecklist,
 } from '@/lib/mock-data';
 
+function getShortPersonName(person?: UserSummary | null): string | null {
+  if (!person) return null;
+  const full = [person.first_name, person.last_name].filter(Boolean).join(' ').trim();
+  if (full) return full;
+  return person.email.split('@')[0] || person.email;
+}
+
 export default function DashboardPage() {
   const [activeTab, setActiveTab] = useState('overview');
+  const [isCoupleModalOpen, setIsCoupleModalOpen] = useState(false);
+
   const { user: profile } = useSession();
+  const coupleState = useCouple();
 
   // Map profil backend ke shape UserSession yang dipakai komponen dashboard
   const currentUser: UserSession = profile
     ? {
         id: profile.id,
-        fullName: [profile.first_name, profile.last_name].filter(Boolean).join(' ') || profile.email,
+        fullName:
+          [profile.first_name, profile.last_name].filter(Boolean).join(' ') ||
+          profile.email,
         email: profile.email,
         role: mockUser.role,
       }
     : mockUser;
+
+  // Tentukan pasangan aktif dari CoupleLink terbaru atau fallback ke profile.partner
+  const partner: UserSummary | null = coupleState.couple
+    ? coupleState.couple.requester.id === profile?.id
+      ? coupleState.couple.partner
+      : coupleState.couple.requester
+    : profile?.partner ?? null;
+
+  // Sinkronisasi nama mempelai dari data profil & pasangan asli jika tersedia
+  const userDisplayName = getShortPersonName(profile);
+  const partnerDisplayName = getShortPersonName(partner);
+
+  const activeWedding: WeddingSummary = {
+    ...mockWedding,
+    brideName: userDisplayName || mockWedding.brideName,
+    groomName: partnerDisplayName || mockWedding.groomName,
+    title:
+      userDisplayName && partnerDisplayName
+        ? `The Wedding of ${userDisplayName} & ${partnerDisplayName}`
+        : mockWedding.title,
+  };
 
   // Lifted state for Rundown Events and Preparation Checklist
   const [events, setEvents] = useState<WeddingEventItem[]>(mockEvents);
@@ -68,31 +105,46 @@ export default function DashboardPage() {
 
   return (
     <SidebarProvider
-      style={{ "--sidebar-width": "18rem", "--sidebar-width-icon": "4rem" } as React.CSSProperties}
+      style={{ '--sidebar-width': '18rem', '--sidebar-width-icon': '4rem' } as React.CSSProperties}
       className="flex min-h-screen bg-ivory-100 font-sans text-charcoal-800 antialiased selection:bg-champagne-light selection:text-charcoal-900"
     >
       {/* 1. Left Sidebar Navigation (Desktop & Mobile Drawer) */}
       <DashboardSidebar
         user={currentUser}
-        wedding={mockWedding}
+        wedding={activeWedding}
         activeTab={activeTab}
         onTabChange={setActiveTab}
         totalEvents={events.length}
         checklistProgress={checklistProgress}
+        onOpenCoupleModal={() => setIsCoupleModalOpen(true)}
       />
 
       {/* 2. Right Main Application Area */}
       <div className="flex flex-1 flex-col min-w-0">
         {/* Top Header App Bar */}
         <DashboardHeader
-          wedding={mockWedding}
+          wedding={activeWedding}
           activeTab={activeTab}
+          hasPartner={Boolean(partner)}
+          incomingInvitationsCount={coupleState.invitations.incoming.length}
+          onOpenCoupleModal={() => setIsCoupleModalOpen(true)}
         />
 
         {/* Scrollable Dashboard Body */}
         <main className="flex-1 w-full max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
+          {/* Couple Partner & Invitation Status Banner */}
+          <CoupleStatusBanner
+            user={profile}
+            couple={coupleState.couple}
+            invitations={coupleState.invitations}
+            isLoading={coupleState.isLoading}
+            isMutating={coupleState.isMutating}
+            onOpenModal={() => setIsCoupleModalOpen(true)}
+            onAcceptInvitation={coupleState.acceptInvitation}
+          />
+
           {/* Hero Countdown Banner */}
-          <CountdownBanner wedding={mockWedding} />
+          <CountdownBanner wedding={activeWedding} />
 
           {/* Tab 1: Ringkasan (Overview) */}
           {activeTab === 'overview' && (
@@ -210,10 +262,27 @@ export default function DashboardPage() {
             <span>&bull; Bespoke Wedding Management System</span>
           </div>
           <div>
-            <span>Concierge Active &bull; Synced with {mockWedding.brideName} &amp; {mockWedding.groomName}</span>
+            <span>Concierge Active &bull; Synced with {activeWedding.brideName} &amp; {activeWedding.groomName}</span>
           </div>
         </footer>
       </div>
+
+      {/* Modal Manajemen Pasangan & Profil */}
+      <CouplePartnerModal
+        open={isCoupleModalOpen}
+        onClose={() => setIsCoupleModalOpen(false)}
+        couple={coupleState.couple}
+        invitations={coupleState.invitations}
+        isMutating={coupleState.isMutating}
+        error={coupleState.error}
+        successMsg={coupleState.successMsg}
+        onClearFeedback={coupleState.clearFeedback}
+        onInvite={coupleState.invitePartner}
+        onAccept={coupleState.acceptInvitation}
+        onReject={coupleState.rejectInvitation}
+        onCancel={coupleState.cancelInvitation}
+        onUnlink={coupleState.unlinkCouple}
+      />
     </SidebarProvider>
   );
 }

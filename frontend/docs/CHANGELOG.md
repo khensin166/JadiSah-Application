@@ -1,5 +1,13 @@
 # Frontend Changelog
 
+- Implemented **Part 2: User Dashboard Real Backend API Integration (Profile & Couple Partner)**:
+  - Added TypeScript contracts in `types/couple.ts` (`CoupleLink`, `CoupleInvitationList`, `CoupleLinkStatus`) and extended `types/auth.ts` (`UserSummary`, `UpdateProfilePayload`, `partner`).
+  - Added `coupleService` (`lib/services/couple.service.ts`) covering `GET /api/couples/me`, `DELETE /api/couples/me`, `GET /api/couples/invitations`, `POST /api/couples/invitations`, `POST /api/couples/invitations/{id}/accept`, `POST /api/couples/invitations/{id}/reject`, and `DELETE /api/couples/invitations/{id}`.
+  - Added `authService.updateProfile()` calling `PATCH /api/users/me`.
+  - Created `useCouple()` hook (`hooks/use-couple.ts`) for reactive couple link state, invitation lists, and mutation handlers with automatic session refresh.
+  - Built `CoupleStatusBanner` (`components/dashboard/CoupleStatusBanner.tsx`) and `CouplePartnerModal` (`components/dashboard/CouplePartnerModal.tsx`) for inviting partners by email, responding to incoming invitations, unlinking couples, and updating user profile (`first_name` & `last_name`).
+  - Wired `DashboardPage`, `DashboardHeader`, `DashboardSidebar`, and `CountdownBanner` to dynamically synchronize bride/groom names with the authenticated user and linked partner while preserving the Éternel Atelier sidebar styling.
+
 - Implemented **Part 1: Auth Session Context, Route Protection & Register Page**:
   - Created global `AuthProvider` and `useSession()` hook in `context/auth-context.tsx` fetching and caching the user profile via `GET /api/users/me` on app load.
   - Connected `DashboardPage` and `DashboardSidebar` to dynamically display the active user profile (`currentUser`) from the session instead of static mock data.

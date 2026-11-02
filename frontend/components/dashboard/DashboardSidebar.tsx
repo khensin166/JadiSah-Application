@@ -48,6 +48,7 @@ interface DashboardSidebarProps {
   onTabChange: (tab: string) => void;
   totalEvents?: number;
   checklistProgress?: string;
+  onOpenCoupleModal?: () => void;
 }
 
 export function DashboardSidebar({
@@ -57,6 +58,7 @@ export function DashboardSidebar({
   onTabChange,
   totalEvents = 3,
   checklistProgress = "2/5",
+  onOpenCoupleModal,
   ...props
 }: DashboardSidebarProps & React.ComponentProps<typeof Sidebar>) {
   const { logout } = useAuth();
@@ -195,6 +197,7 @@ export function DashboardSidebar({
               <SidebarMenuItem>
                 <SidebarMenuButton
                   tooltip="Pengaturan Acara"
+                  onClick={onOpenCoupleModal}
                   className="relative h-10 rounded-lg px-3 text-sm text-charcoal-700 transition-all duration-200 hover:bg-champagne/15 hover:text-charcoal-900"
                 >
                   <Settings className="size-4" />
@@ -230,9 +233,12 @@ export function DashboardSidebar({
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent side="top" align="start" sideOffset={8} className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-xl border-champagne-light bg-ivory-50">
-            <DropdownMenuItem className="hover:bg-champagne/20 cursor-pointer text-charcoal-800">
+            <DropdownMenuItem
+              onClick={onOpenCoupleModal}
+              className="hover:bg-champagne/20 cursor-pointer text-charcoal-800"
+            >
               <Settings className="mr-2 size-4" />
-              <span>Pengaturan</span>
+              <span>Pasangan &amp; Profil</span>
             </DropdownMenuItem>
             <DropdownMenuSeparator className="bg-champagne-light/50" />
             <DropdownMenuItem 
