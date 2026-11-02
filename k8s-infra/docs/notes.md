@@ -6,3 +6,7 @@
 ====================================
 1.Control Plane / Master: Mengatur jaringan, menjadwalkan pod, dan menyimpan state (di database internal K3s).
 2.Worker: Mengeksekusi dan menjalankan container/pod (terbukti Nginx tadi bisa berjalan di node ini).
+
+====================================
+Panduan Lanjutan Terkait Multi-Node & Migrasi Pods:
+Silakan baca panduan lengkap di: `k8s-infra/docs/K8S_POD_MIGRATION_GUIDE.md` (mencakup simulasi drain/cordon, nodeSelector, podAntiAffinity, serta pemisahan beban Stateful vs Stateless).

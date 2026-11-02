@@ -14,3 +14,6 @@ ANSIBLE_CONFIG=ansible.cfg ansible-playbook playbooks/k3s-server.yml -K
 
 # 3. Instalasi K9s
 ANSIBLE_CONFIG=ansible.cfg ansible-playbook playbooks/k9s.yml -K
+
+# 4. Akses SSH ke Worker via Jump Host (Master)
+ssh -i ~/.ssh/jadi_sah.pem -J jds@100.79.211.49 fjr@192.168.1.30
