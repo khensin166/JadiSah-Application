@@ -3,6 +3,17 @@
 ## [Unreleased]
 
 ### Added
+- **Structured JSON Logging & Observability (`internal/logger/`)**:
+  - Centralized JSON logger built on Go standard library `log/slog` (RFC3339Nano UTC timestamp, service name, environment, log level, and error object).
+  - Gin HTTP logging middleware (`logger.Middleware()`):
+    - Injects and propagates `X-Request-ID` as `trace_id`.
+    - Tracks per-request latency in milliseconds (`latency_ms`).
+    - Records authenticated `user_id` automatically from Limen session context.
+    - Captures HTTP status, client IP, method, and path.
+  - Gin panic recovery middleware (`logger.Recovery()`):
+    - Catches unhandled panics, formats stack traces into structured JSON error objects (`PanicError`), and returns clean `500 Internal Server Error` responses containing the `trace_id`.
+  - Comprehensive unit test suite in `internal/logger/logger_test.go` covering logger formatting, middleware headers, and panic recovery.
+- Multi-path `.env` loading in `cmd/server/main.go` (`.env`, `../.env`, `../../.env`) ensuring seamless execution regardless of the working directory.
 - Admin IAM endpoints (`internal/api/admin.go`):
   - `GET /api/admin/roles` (permission `roles:read`)
   - `GET /api/admin/users` with `q`, `page`, `per_page` (permission `users:read`)
@@ -13,11 +24,11 @@
 - Limen auth integration (credential-password, GORM adapter, UUID ID generator, Bearer token support).
 - GORM models: `users`, `roles`, `permissions`, `user_roles`, `role_permissions`, `couple_links`, Limen tables.
 - Profile & couple-link handlers.
-- Local `.env` loading via `godotenv`.
 - Kubernetes internal service integration support: `http://backend-service.jadisah-staging.svc.cluster.local:8080` for Next.js rewrite proxies.
 - DBML schema (`docs/schema.dbml`) for ERD visualization.
 
 ### Changed
+- Migrated all `log.Println` and `log.Fatalf` in `cmd/server/main.go` and `internal/db/seeder.go` to structured `logger.Info` / `logger.Error` / `logger.Warn`.
 - Entry point moved from `backend/main.go` to `backend/cmd/server/main.go` (Dockerfile updated).
 
 ### Initial

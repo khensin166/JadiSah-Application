@@ -1,16 +1,16 @@
 package db
 
 import (
-	"log"
 	"os"
 
+	"github.com/khensin166/JadiSah-Application/backend/internal/logger"
 	"github.com/khensin166/JadiSah-Application/backend/internal/models"
 	"gorm.io/gorm"
 )
 
 // SeedRolesAndPermissions populates the database with default RBAC entries.
 func SeedRolesAndPermissions(db *gorm.DB) error {
-	log.Println("Seeding roles and permissions...")
+	logger.Info("Seeding default roles and permissions...")
 
 	// 1. Definisikan Permissions
 	permissions := []models.Permission{
@@ -94,15 +94,15 @@ func SeedRolesAndPermissions(db *gorm.DB) error {
 
 			// Assign role using GORM association (Append ignores duplicates automatically if configured properly, but to be safe we can use Append)
 			if err := db.Model(&user).Association("Roles").Append(&superAdminRole); err != nil {
-				log.Printf("Failed to grant SUPER_ADMIN to %s: %v\n", superAdminEmail, err)
+				logger.Error("Failed to grant SUPER_ADMIN", "email", superAdminEmail, "error", err.Error())
 			} else {
-				log.Printf("Granted SUPER_ADMIN to %s\n", superAdminEmail)
+				logger.Info("Granted SUPER_ADMIN role successfully", "email", superAdminEmail)
 			}
 		} else {
-			log.Printf("SUPER_ADMIN_EMAIL (%s) not found in users table yet.\n", superAdminEmail)
+			logger.Warn("SUPER_ADMIN_EMAIL not found in users table yet", "email", superAdminEmail)
 		}
 	}
 
-	log.Println("Seeding completed!")
+	logger.Info("Roles and permissions seeding completed successfully")
 	return nil
 }

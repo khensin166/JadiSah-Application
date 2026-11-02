@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	apigen "github.com/khensin166/JadiSah-Application/backend/generated/api"
+	"github.com/khensin166/JadiSah-Application/backend/internal/logger"
 	"github.com/thecodearcher/limen"
 	"gorm.io/gorm"
 )
@@ -40,6 +41,7 @@ func (s *Server) authenticate(c *gin.Context) (uuid.UUID, bool) {
 		return uuid.Nil, false
 	}
 
+	c.Set(logger.UserIDKey, userID.String())
 	return userID, true
 }
 
