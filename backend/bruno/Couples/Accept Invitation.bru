@@ -17,3 +17,17 @@ headers {
 auth:bearer {
   token: {{token}}
 }
+
+docs {
+  # Accept Invitation
+  Menerima undangan penautan pasangan (hanya dapat dilakukan oleh pihak yang diundang).
+  
+  Menerima undangan akan secara otomatis membatalkan seluruh undangan `PENDING` lainnya milik kedua pengguna.
+  
+  ### Response Status:
+  - `200 OK`: `{"message": "invitation accepted"}`
+  - `400 Bad Request`: Undangan tidak berstatus PENDING.
+  - `401 Unauthorized`: Token tidak valid.
+  - `403 Forbidden`: Pengguna bukan pihak yang diundang.
+  - `404 Not Found`: ID undangan tidak ditemukan.
+}

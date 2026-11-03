@@ -1,7 +1,7 @@
 meta {
   name: Set User Subscription
   type: http
-  seq: 3
+  seq: 4
 }
 
 put {
@@ -23,4 +23,24 @@ body:json {
     "tier": "PREMIUM",
     "expires_at": "2030-12-31T23:59:59Z"
   }
+}
+
+docs {
+  # Set User Subscription
+  Memperbarui tingkat langganan pengguna (Tier) dan masa berlaku langganan.
+  
+  ### Validasi:
+  - Tier yang valid: `FREE`, `PREMIUM`, `VIP`.
+  - Jika tier diubah ke `FREE`, `expires_at` otomatis direset menjadi `null`.
+  - Untuk `PREMIUM` dan `VIP`, format `expires_at` wajib ISO 8601 UTC.
+  
+  ### RBAC Permission:
+  - Wajib memiliki permission `subscriptions:update`.
+  
+  ### Response Status:
+  - `200 OK`: Mengembalikan objek AdminUser dengan tier baru.
+  - `400 Bad Request`: Format tanggal atau tier tidak valid.
+  - `401 Unauthorized`: Token tidak valid.
+  - `403 Forbidden`: Pengguna tidak memiliki permission `subscriptions:update`.
+  - `404 Not Found`: User target tidak ditemukan.
 }

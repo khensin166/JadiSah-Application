@@ -17,3 +17,15 @@ headers {
 auth:bearer {
   token: {{token}}
 }
+
+docs {
+  # Reject Invitation
+  Menolak undangan penautan pasangan (hanya dapat dilakukan oleh pihak yang diundang).
+  
+  ### Response Status:
+  - `200 OK`: `{"message": "success"}`
+  - `400 Bad Request`: Undangan tidak berstatus PENDING.
+  - `401 Unauthorized`: Token tidak valid.
+  - `403 Forbidden`: Pengguna bukan pihak yang diundang.
+  - `404 Not Found`: ID undangan tidak ditemukan.
+}

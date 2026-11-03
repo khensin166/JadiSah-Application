@@ -291,6 +291,8 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/CoupleLink"
+        "204":
+          description: Tidak ada tautan aktif untuk role ADMIN / SUPER_ADMIN (Mode Concierge Administrator)
         "401": { $ref: "#/components/responses/Unauthorized" }
         "404": { $ref: "#/components/responses/NotFound" }
     delete:
@@ -298,8 +300,14 @@ paths:
       tags: [couples]
       summary: Putuskan tautan pasangan aktif
       responses:
-        "204":
+        "200":
           description: Tautan diputus
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+        "204":
+          description: Tautan diputus (tanpa konten)
         "401": { $ref: "#/components/responses/Unauthorized" }
         "404": { $ref: "#/components/responses/NotFound" }
 

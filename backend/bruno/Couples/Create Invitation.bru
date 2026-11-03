@@ -23,3 +23,21 @@ body:json {
     "partner_email": "partner@example.com"
   }
 }
+
+docs {
+  # Create Invitation
+  Mengirim undangan penautan akun pasangan menggunakan email target.
+  
+  ### Validasi:
+  - Tidak dapat mengundang diri sendiri.
+  - Email target harus sudah terdaftar di sistem.
+  - Pengirim maupun target tidak boleh sedang berada dalam status pasangan `ACCEPTED`.
+  - Tidak boleh ada undangan ganda yang masih `PENDING`.
+  
+  ### Response Status:
+  - `201 Created`: `{"message": "invitation sent"}`
+  - `400 Bad Request`: Input tidak valid atau mencoba mengundang email sendiri.
+  - `401 Unauthorized`: Token tidak valid.
+  - `404 Not Found`: Email target tidak ditemukan di sistem.
+  - `409 Conflict`: Salah satu user sudah memiliki pasangan atau undangan pending sudah ada.
+}

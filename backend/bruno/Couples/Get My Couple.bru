@@ -17,3 +17,14 @@ headers {
 auth:bearer {
   token: {{token}}
 }
+
+docs {
+  # Get My Couple
+  Mengambil data tautan pasangan yang aktif (ACCEPTED).
+  
+  ### Response Status:
+  - `200 OK`: Mengembalikan objek CoupleLink (`id`, `requester`, `partner`, `status: "ACCEPTED"`, `created_at`, `responded_at`).
+  - `204 No Content`: Mode Concierge Administrator. Akun ber-role `ADMIN` atau `SUPER_ADMIN` tidak memerlukan penautan pasangan.
+  - `401 Unauthorized`: Token tidak valid atau sesi berakhir.
+  - `404 Not Found`: Akun role `USER` reguler yang belum memiliki pasangan aktif.
+}

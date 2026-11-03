@@ -1,7 +1,7 @@
 meta {
   name: List Roles
   type: http
-  seq: 4
+  seq: 1
 }
 
 get {
@@ -16,4 +16,17 @@ headers {
 
 auth:bearer {
   token: {{token}}
+}
+
+docs {
+  # List Roles
+  Mengambil daftar seluruh role dan permission yang tersedia di sistem.
+  
+  ### RBAC Permission:
+  - Wajib memiliki permission `roles:read`.
+  
+  ### Response Status:
+  - `200 OK`: Array of Role objek (`name`, `description`, `permissions`).
+  - `401 Unauthorized`: Token tidak valid.
+  - `403 Forbidden`: Pengguna tidak memiliki permission `roles:read`.
 }

@@ -1,7 +1,7 @@
 meta {
   name: Set User Roles
   type: http
-  seq: 2
+  seq: 3
 }
 
 put {
@@ -22,4 +22,25 @@ body:json {
   {
     "roles": ["ADMIN"]
   }
+}
+
+docs {
+  # Set User Roles
+  Mengubah role yang diberikan kepada pengguna.
+  
+  ### Validasi:
+  - Role yang valid: `USER`, `ADMIN`, `SUPER_ADMIN`.
+  - Array role tidak boleh kosong.
+  - **Self-Demotion Guard:** Pengguna dengan role `SUPER_ADMIN` tidak diizinkan mencabut role `SUPER_ADMIN` dari dirinya sendiri.
+  
+  ### RBAC Permission:
+  - Wajib memiliki permission `roles:assign`.
+  
+  ### Response Status:
+  - `200 OK`: Mengembalikan objek AdminUser yang diperbarui.
+  - `400 Bad Request`: Payload tidak valid atau role tidak dikenal.
+  - `401 Unauthorized`: Token tidak valid.
+  - `403 Forbidden`: Pengguna tidak memiliki permission `roles:assign`.
+  - `404 Not Found`: User target tidak ditemukan.
+  - `409 Conflict`: Super Admin mencoba mencabut role Super Admin dari dirinya sendiri.
 }

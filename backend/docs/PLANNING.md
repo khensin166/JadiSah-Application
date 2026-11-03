@@ -53,3 +53,4 @@
 - **Database:** AutoMigrate dan Seeder Role/Permission telah terpasang. Konfigurasi staging menggunakan user `jadisah` dan database `jadisah_staging`.
 - **Observability:** Structured JSON logging terpusat via `internal/logger` terpasang di seluruh router Gin dan startup lifecycle.
 - **Server:** Menggunakan framework Gin, handler server di-generate menggunakan `oapi-codegen` dan dipisahkan menjadi `internal/api/profile.go` serta `internal/api/couples.go`.
+- **Admin Concierge Mode:** `GET /api/couples/me` mengembalikan status `204 No Content` untuk akun ber-role `ADMIN` dan `SUPER_ADMIN` tanpa link pasangan aktif, dan `DELETE /api/couples/me` mendukung status `UNLINKED`. Log query GORM dikonfigurasi `IgnoreRecordNotFoundError: true`.

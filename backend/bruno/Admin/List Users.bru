@@ -1,7 +1,7 @@
 meta {
   name: List Users
   type: http
-  seq: 1
+  seq: 2
 }
 
 get {
@@ -16,4 +16,22 @@ headers {
 
 auth:bearer {
   token: {{token}}
+}
+
+docs {
+  # List Users
+  Mengambil daftar pengguna dengan filter pencarian dan pagination.
+  
+  ### Query Parameters:
+  - `q` (string, optional): Kata kunci pencarian untuk email, first_name, atau last_name (case-insensitive).
+  - `page` (integer, default: 1): Nomor halaman.
+  - `per_page` (integer, default: 20, max: 100): Jumlah item per halaman.
+  
+  ### RBAC Permission:
+  - Wajib memiliki permission `users:read`.
+  
+  ### Response Status:
+  - `200 OK`: `{"items": [...], "page": 1, "per_page": 20, "total": 100}`
+  - `401 Unauthorized`: Token tidak valid.
+  - `403 Forbidden`: Pengguna tidak memiliki permission `users:read`.
 }

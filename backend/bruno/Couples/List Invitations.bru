@@ -17,3 +17,12 @@ headers {
 auth:bearer {
   token: {{token}}
 }
+
+docs {
+  # List Invitations
+  Mengambil daftar undangan penautan pasangan yang berstatus `PENDING` (baik undangan masuk maupun keluar).
+  
+  ### Response Status:
+  - `200 OK`: `{"incoming": [...], "outgoing": [...]}`
+  - `401 Unauthorized`: Token tidak valid.
+}

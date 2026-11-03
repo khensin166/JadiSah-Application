@@ -17,3 +17,13 @@ headers {
 auth:bearer {
   token: {{token}}
 }
+
+docs {
+  # Unlink My Couple
+  Memutuskan tautan pasangan yang sedang aktif. Status pada database diubah menjadi `UNLINKED`.
+  
+  ### Response Status:
+  - `200 OK`: `{"message": "couple unlinked"}`
+  - `401 Unauthorized`: Token tidak valid atau sesi berakhir.
+  - `404 Not Found`: Tidak ada pasangan aktif yang dapat diputuskan.
+}

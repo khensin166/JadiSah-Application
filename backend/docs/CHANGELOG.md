@@ -3,6 +3,17 @@
 ## [Unreleased]
 
 ### Added
+- **Admin Concierge Mode & Couple Auth Exception**:
+  - `GET /api/couples/me`: Returns `204 No Content` when accessed by `ADMIN` or `SUPER_ADMIN` accounts without active couple links, eliminating 404 error noise in the frontend and admin concierge view.
+  - `DELETE /api/couples/me`: Transitions couple link to `models.Unlinked` (`UNLINKED`) status upon disconnection.
+- **Contract-First & Documentation Synchronization**:
+  - Updated OpenAPI 3.0 specification (`backend/api/openapi.yaml`) with `204 No Content` for `getMyCouple`, `200`/`204` for `unlinkMyCouple`, and `UNLINKED` in `CoupleLinkStatus`.
+  - Regenerated Go Gin server interfaces and models via `go generate ./...` (`backend/generated/api/server.gen.go`).
+  - Updated Bruno collections in `backend/bruno/Couples/` and `backend/bruno/Admin/` with embedded `docs {}` blocks covering parameters, RBAC permissions, and expected response codes.
+  - Rewrote and expanded project API documentation in `docs/API.md` with complete routing tables, HTTP status codes, and environment guides.
+- **GORM Query Optimization & Clean Logging**:
+  - Configured GORM logger in `internal/db/db.go` with `logger.Config{ IgnoreRecordNotFoundError: true }` to silence noisy `record not found` console errors on normal lookup queries.
+  - Refactored partner queries in `internal/api/profile.go` and `internal/api/couples.go` from `.First(&link)` to `.Limit(1).Find(&coupleLinks)`.
 - **Structured JSON Logging & Observability (`internal/logger/`)**:
   - Centralized JSON logger built on Go standard library `log/slog` (RFC3339Nano UTC timestamp, service name, environment, log level, and error object).
   - Gin HTTP logging middleware (`logger.Middleware()`):
