@@ -12,7 +12,8 @@ export const coupleService = {
    */
   async getMyCouple(): Promise<CoupleLink | null> {
     try {
-      return await apiClient<CoupleLink>("/couples/me", { method: "GET" });
+      const res = await apiClient<CoupleLink | undefined>("/couples/me", { method: "GET" });
+      return res ?? null;
     } catch (err) {
       if (err instanceof ApiError && (err.status === 404 || err.status === 401)) {
         return null;

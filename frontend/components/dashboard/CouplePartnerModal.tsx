@@ -7,6 +7,7 @@ import {
   Loader2,
   Mail,
   Send,
+  ShieldCheck,
   Sparkles,
   Unlink,
   UserCheck,
@@ -71,6 +72,9 @@ export const CouplePartnerModal: React.FC<CouplePartnerModalProps> = ({
   const [profileErr, setProfileErr] = useState<string | null>(null);
 
   if (!open) return null;
+
+  const isSuperAdmin = Boolean(user?.roles?.includes("SUPER_ADMIN"));
+  const isAdmin = isSuperAdmin || Boolean(user?.roles?.includes("ADMIN"));
 
   const partnerSummary: UserSummary | null = couple
     ? couple.requester.id === user?.id
@@ -204,6 +208,48 @@ export const CouplePartnerModal: React.FC<CouplePartnerModalProps> = ({
               {successMsg && (
                 <div className="rounded-xl border border-sage/40 bg-sage-soft px-4 py-3 text-xs font-medium text-sage-dark">
                   {successMsg}
+                </div>
+              )}
+
+              {/* Admin Concierge Configuration Inspection Panel */}
+              {isAdmin && (
+                <div className="rounded-2xl border border-champagne bg-gradient-to-br from-ivory-50 via-champagne-soft/30 to-ivory-100 p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="inline-flex size-6 items-center justify-center rounded-md bg-charcoal-900 text-champagne-light">
+                        <ShieldCheck className="size-3.5" />
+                      </span>
+                      <span className="text-xs font-bold uppercase tracking-wider text-charcoal-900">
+                        Konfigurasi Pasangan (Admin View)
+                      </span>
+                    </div>
+                    <Badge variant="charcoal" className="text-[10px] py-0">
+                      {isSuperAdmin ? "SUPER_ADMIN" : "ADMIN"}
+                    </Badge>
+                  </div>
+                  <p className="text-xs text-charcoal-600 leading-relaxed">
+                    Akun Administrator tetap memegang otoritas penuh dan tidak diwajibkan memiliki tautan pasangan aktif (exception bypass). Anda dapat meninjau parameter konfigurasi pasangan di bawah ini atau melakukan simulasi pengiriman undangan.
+                  </p>
+                  <div className="grid grid-cols-2 gap-2.5 pt-1 text-xs">
+                    <div className="rounded-xl border border-champagne-light/80 bg-white/80 p-2.5">
+                      <span className="block text-[10px] font-semibold uppercase tracking-wider text-charcoal-500">
+                        Status Exception
+                      </span>
+                      <span className="mt-0.5 block font-semibold text-sage-dark">
+                        Couple Auth Bypassed
+                      </span>
+                    </div>
+                    <div className="rounded-xl border border-champagne-light/80 bg-white/80 p-2.5">
+                      <span className="block text-[10px] font-semibold uppercase tracking-wider text-charcoal-500">
+                        Status Tautan Saat Ini
+                      </span>
+                      <span className="mt-0.5 block font-semibold text-charcoal-900">
+                        {partnerSummary
+                          ? `Terhubung (${partnerSummary.email})`
+                          : "Mandiri (Concierge Mode)"}
+                      </span>
+                    </div>
+                  </div>
                 </div>
               )}
 

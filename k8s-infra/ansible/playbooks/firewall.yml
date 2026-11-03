@@ -1,0 +1,8 @@
+---
+# Playbook untuk standarisasi Firewall (UFW) pada seluruh node Kubernetes (Master & Worker)
+- name: Configure Firewall (UFW) for K3s Multi-Node Cluster
+  hosts: all
+  become: yes
+  roles:
+    - firewall
+

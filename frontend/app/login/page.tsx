@@ -71,9 +71,9 @@ export default function LoginPage() {
                   >
                     Password
                   </label>
-                  <a href="#" className="text-xs font-medium text-primary hover:underline" tabIndex={-1}>
-                    Forgot password?
-                  </a>
+                  <Link href="/forgot-password" className="text-xs font-medium text-primary hover:underline">
+                    Lupa password?
+                  </Link>
                 </div>
                 <div className="relative">
                   <Input 

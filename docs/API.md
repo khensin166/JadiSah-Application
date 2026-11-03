@@ -54,12 +54,23 @@ Semua respons API wajib mengikuti format objek pembungkus (*wrapper*) berikut ag
 ## 6. Autentikasi
 Untuk endpoint yang diproteksi, Frontend wajib menyisipkan token ke dalam *HTTP Headers*:
 `Authorization: Bearer <token_anda_disini>`
+(Atau sesuai yang disepakati, via Cookie `httpOnly` yang dikelola otomatis oleh browser).
 
-(Atau sesuai yang disepakati, misal via Cookie `httpOnly`).
+## 7. Endpoint IAM Admin (`/api/admin/*`)
+Endpoint administrasi sistem dilindungi oleh middleware izin (*RBAC permissions*):
+- `GET    /api/admin/users?q=&page=&per_page=`  (Permission: `users:read`) - Mengambil daftar akun pengguna dengan filter & paginasi.
+- `GET    /api/admin/roles`                     (Permission: `roles:read`) - Mengambil daftar seluruh role dan izinnya.
+- `PUT    /api/admin/users/:userId/roles`        (Permission: `roles:assign` - Super Admin) - Memperbarui role pengguna.
+- `PUT    /api/admin/users/:userId/subscription` (Permission: `subscriptions:update` - Super Admin) - Memperbarui tier langganan (`FREE`, `PREMIUM`, `VIP`) dan masa kedaluwarsa.
 
-## 7. Integrasi Pihak Ketiga (Third-Party APIs)
+## 8. Integrasi Pihak Ketiga (Third-Party APIs)
 Setiap kali tim menggunakan layanan luar (misal: Midtrans, Xendit, AWS S3), wajib tambahkan ke dokumentasi ini:
 - **Nama Provider:** Midtrans
 - **Tujuan:** Payment Gateway
 - **Webhooks:** `/api/webhooks/midtrans`
 - **Secret Keys:** Hanya dikelola di environment server (sesuai `SECURITY.md`).
+
+## Cara forward koneksi staging ke local
+```bash
+kubectl port-forward svc/backend-service 8080:80 -n staging
+```

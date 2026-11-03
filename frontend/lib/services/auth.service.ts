@@ -1,7 +1,10 @@
 import { apiClient } from "../api-client";
 import type {
+  AuthSession,
+  ChangePasswordPayload,
   LoginCredentials,
   RegisterPayload,
+  ResetPasswordPayload,
   RoleName,
   UpdateProfilePayload,
   UserProfile,
@@ -58,6 +61,58 @@ export const authService = {
    */
   async logout(): Promise<void> {
     return apiClient<void>("/auth/signout", {
+      method: "POST",
+    });
+  },
+
+  /**
+   * Requests a password reset link sent to user's email.
+   */
+  async requestPasswordReset(email: string): Promise<{ message: string }> {
+    return apiClient<{ message: string }>("/auth/passwords/request-reset", {
+      method: "POST",
+      body: JSON.stringify({ email }),
+    });
+  },
+
+  /**
+   * Resets the password using the token received from email.
+   */
+  async resetPassword(payload: ResetPasswordPayload): Promise<{ message: string }> {
+    return apiClient<{ message: string }>("/auth/passwords/reset", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  },
+
+  /**
+   * Changes current password for authenticated user.
+   */
+  async changePassword(payload: ChangePasswordPayload): Promise<UserSession> {
+    return apiClient<UserSession>("/auth/passwords/change", {
+      method: "POST",
+      body: JSON.stringify({
+        current_password: payload.current_password,
+        new_password: payload.new_password,
+        revoke_other_sessions: payload.revoke_other_sessions ?? true,
+      }),
+    });
+  },
+
+  /**
+   * Lists active sessions for current user.
+   */
+  async listSessions(): Promise<AuthSession[]> {
+    return apiClient<AuthSession[]>("/auth/sessions", {
+      method: "GET",
+    });
+  },
+
+  /**
+   * Revokes all active sessions for current user (except current or all).
+   */
+  async revokeOtherSessions(): Promise<void> {
+    return apiClient<void>("/auth/revoke-sessions", {
       method: "POST",
     });
   },

@@ -1,0 +1,89 @@
+---
+# Task konfigurasi firewall UFW untuk K3s Multi-Node
+- name: Ensure UFW is installed
+  apt:
+    name: ufw
+    state: present
+
+# PENTING UNTUK KUBERNETES:
+# Secara default, UFW memblokir paket FORWARD (DEFAULT_FORWARD_POLICY="DROP").
+# Hal ini menyebabkan traffic antar pod / antar node (Flannel CNI) di-drop oleh kernel iptables.
+# Mengubahnya ke "ACCEPT" wajib dilakukan agar CoreDNS dan Pod-to-Pod networking berfungsi normal.
+- name: Set UFW DEFAULT_FORWARD_POLICY to ACCEPT
+  lineinfile:
+    path: /etc/default/ufw
+    regexp: '^DEFAULT_FORWARD_POLICY='
+    line: 'DEFAULT_FORWARD_POLICY="ACCEPT"'
+    state: present
+  notify: Reload UFW
+
+- name: Allow SSH management port (22/tcp)
+  ufw:
+    rule: allow
+    port: '22'
+    proto: tcp
+    comment: "SSH Management & Ansible"
+
+- name: Allow all traffic on Tailscale interface (tailscale0)
+  ufw:
+    rule: allow
+    interface: tailscale0
+    direction: in
+    comment: "Tailscale Mesh VPN"
+
+- name: Allow all traffic on CNI bridge interface (cni0)
+  ufw:
+    rule: allow
+    interface: cni0
+    direction: in
+    comment: "Kubernetes CNI bridge"
+
+- name: Allow all traffic on Flannel VXLAN interface (flannel.1)
+  ufw:
+    rule: allow
+    interface: flannel.1
+    direction: in
+    comment: "Kubernetes Flannel overlay"
+
+- name: Allow all traffic from internal LAN subnet (192.168.1.0/24)
+  ufw:
+    rule: allow
+    src: "{{ cluster_lan_subnet | default('192.168.1.0/24') }}"
+    comment: "Kubernetes Cluster Inter-Node LAN Subnet"
+
+- name: Allow K3s Flannel VXLAN UDP port (8472/udp)
+  ufw:
+    rule: allow
+    port: '8472'
+    proto: udp
+    comment: "K3s Flannel VXLAN Overlay"
+
+- name: Allow Kubelet metrics and API communication (10250/tcp)
+  ufw:
+    rule: allow
+    port: '10250'
+    proto: tcp
+    comment: "Kubelet API & Metrics"
+
+- name: Allow K3s API Server port (6443/tcp)
+  ufw:
+    rule: allow
+    port: '6443'
+    proto: tcp
+    comment: "K3s API Server"
+  when: "'k3s_servers' in group_names"
+
+- name: Allow HTTP and HTTPS traffic for Ingress Traefik (80, 443/tcp)
+  ufw:
+    rule: allow
+    port: "{{ item }}"
+    proto: tcp
+    comment: "Traefik Ingress Controller"
+  loop:
+    - '80'
+    - '443'
+  when: "'k3s_servers' in group_names"
+
+- name: Enable UFW service
+  ufw:
+    state: enabled

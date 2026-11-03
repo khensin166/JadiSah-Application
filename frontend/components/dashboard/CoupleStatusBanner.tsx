@@ -1,7 +1,16 @@
 "use client";
 
 import React from "react";
-import { Check, Heart, Mail, UserCheck, UserPlus } from "lucide-react";
+import Link from "next/link";
+import {
+  Check,
+  Heart,
+  Mail,
+  Settings2,
+  ShieldCheck,
+  UserCheck,
+  UserPlus,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import type { UserProfile, UserSummary } from "@/types/auth";
@@ -34,11 +43,63 @@ export const CoupleStatusBanner: React.FC<CoupleStatusBannerProps> = ({
 }) => {
   if (isLoading) return null;
 
+  const isSuperAdmin = Boolean(user?.roles?.includes("SUPER_ADMIN"));
+  const isAdmin = isSuperAdmin || Boolean(user?.roles?.includes("ADMIN"));
+
   const partner: UserSummary | null = couple
     ? couple.requester.id === user?.id
       ? couple.partner
       : couple.requester
     : user?.partner ?? null;
+
+  // 0. Administrator / Super Admin Concierge Mode Banner
+  if (isAdmin) {
+    return (
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-2xl border border-champagne bg-gradient-to-r from-ivory-50 via-champagne-soft/40 to-ivory-50 px-5 py-4 soft-shadow">
+        <div className="flex items-start sm:items-center gap-3.5">
+          <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-charcoal-900 text-champagne-light shadow-xs">
+            <ShieldCheck className="size-5" />
+          </div>
+          <div>
+            <div className="flex flex-wrap items-center gap-2">
+              <h3 className="text-sm font-semibold text-charcoal-900">
+                Mode Concierge Administrator
+              </h3>
+              <Badge variant="charcoal" className="text-[10px] py-0">
+                {isSuperAdmin ? "SUPER_ADMIN" : "ADMIN"}
+              </Badge>
+              <Badge
+                variant="outline"
+                className="text-[10px] py-0 bg-sage-soft text-sage-dark border-sage/30"
+              >
+                Couple Auth Bypassed
+              </Badge>
+            </div>
+            <p className="mt-0.5 text-xs text-charcoal-600">
+              {partner
+                ? `Tersinkronisasi dengan pasangan pengujian: ${getDisplayName(partner)} (${partner.email}).`
+                : "Otoritas Administrator aktif — Anda dapat mengakses workspace pengantin tanpa wajib menautkan pasangan, serta meninjau konfigurasi pasangan."}
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={onOpenModal}
+            className="text-xs border-champagne-light bg-white/80 hover:bg-champagne/20"
+          >
+            <Settings2 className="mr-1.5 size-3.5 text-champagne-dark" />
+            Lihat Config Pasangan
+          </Button>
+          <Button asChild size="sm" className="text-xs">
+            <Link href="/admin">Buka Admin Console</Link>
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   // 1. High-priority banner: Incoming invitation waiting for confirmation
   if (!partner && invitations.incoming.length > 0) {
@@ -164,4 +225,3 @@ export const CoupleStatusBanner: React.FC<CoupleStatusBannerProps> = ({
     </div>
   );
 };
-

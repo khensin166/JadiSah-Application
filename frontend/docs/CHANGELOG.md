@@ -1,5 +1,68 @@
 # Frontend Changelog
 
+- Implemented **Admin Concierge Mode & Couple Authentication Exception (`ADMIN` / `SUPER_ADMIN`)**:
+  - **Backend Exception (`backend/internal/api/couples.go`)**: Updated `GetMyCouple` to return `204 No Content` instead of `404 {"message":"no active couple link"}` when accessed by an `ADMIN` or `SUPER_ADMIN` without a couple link.
+  - **Frontend Couple Hook (`hooks/use-couple.ts`)**: Bypassed automatic `/couples/me` calls on mount for `ADMIN` and `SUPER_ADMIN` roles to eliminate unnecessary 404 responses while keeping invitation inspection active.
+  - **Concierge Banner (`components/dashboard/CoupleStatusBanner.tsx`)**: Added dedicated *Mode Concierge Administrator* banner with `SUPER_ADMIN`/`ADMIN` and `Couple Auth Bypassed` badges, plus quick buttons for *Lihat Config Pasangan* and *Buka Admin Console*.
+  - **Couple Configuration View (`components/dashboard/CouplePartnerModal.tsx`)**: Added Admin View inspection card displaying exception status and current partner link config without downgrading admin authority.
+  - **Sidebar Navigation (`components/dashboard/DashboardSidebar.tsx`)**: Added role badge (`super_admin` / `admin`) and direct navigation shortcuts back to `/admin` (*Admin Console*).
+
+
+- Implemented **Phase 9: Account Security, Password Reset & Session Management**:
+  - **Contract & Types**: Added `ChangePasswordPayload`, `ResetPasswordPayload`, and `AuthSession` in `types/auth.ts`.
+  - **Auth Service Layer**: Extended `authService` in `lib/services/auth.service.ts` with:
+    - `requestPasswordReset(email)` -> `POST /api/auth/passwords/request-reset`
+    - `resetPassword(payload)` -> `POST /api/auth/passwords/reset`
+    - `changePassword(payload)` -> `POST /api/auth/passwords/change`
+    - `listSessions()` -> `GET /api/auth/sessions`
+    - `revokeOtherSessions()` -> `POST /api/auth/revoke-sessions`
+  - **Forgot Password Flow (`app/forgot-password/page.tsx`)**:
+    - Built public page for requesting password recovery email in Éternel Atelier Luxury aesthetic.
+    - Added email format validation, loading spinner states, and confirmation screen.
+    - Updated "Forgot password?" in `app/login/page.tsx` to link to `/forgot-password`.
+  - **Reset Password Flow (`app/reset-password/page.tsx`)**:
+    - Built public page with Suspense boundary extracting `token` from URL query parameter.
+    - Added live password security criteria checks (8+ chars, uppercase, number, symbol), confirmation password comparison, and direct link to login upon success.
+  - **Route Protection**: Updated `proxy.ts` to register `/forgot-password` and `/reset-password` under guest-only routes with redirect to `/dashboard` for logged-in sessions.
+  - **Account & Security Modal (`components/dashboard/AccountSecurityModal.tsx`)**:
+    - Created dual-tab modal on `/dashboard` allowing authenticated users to change their password and manage active login sessions.
+    - Supported automatic revocation of other sessions upon password change (`revoke_other_sessions: true`).
+    - Device recognition and IP/date display with one-click revocation of all remote sessions.
+    - Integrated with `DashboardSidebar` (dropdown menu & quick links) and `DashboardPage`.
+  - **Verification**: Strict TypeScript (`tsc --noEmit`), ESLint (0 errors, 0 warnings), and 25/25 unit tests passing.
+
+
+- Implemented **Phase 8: Admin Console UI & IAM Alignment (Tahap 1 & Tahap 2)**:
+  - **Documentation Alignment**: Synchronized `docs/API.md` and `frontend/docs/PLANNING.md` with the production backend (`backend/internal/api/admin.go`):
+    - Subscriptions: `FREE`, `PREMIUM`, `VIP` (FREE resets `expires_at: null`).
+    - IAM Role Assignment: `PUT /api/admin/users/{userId}/roles` (`USER`, `ADMIN`, `SUPER_ADMIN`).
+    - Guarded against self-demotion: prevents Super Admin from revoking their own `SUPER_ADMIN` role (409 Conflict handling).
+    - Social login (OAuth Google & Facebook) formally deferred to Phase 9.
+  - **TypeScript Contracts**: Created `types/admin.ts` defining `AdminUser`, `SubscriptionTier`, `RoleName`, `AdminUsersResponse`, `SetUserRolesPayload`, `SetUserSubscriptionPayload`, and `AdminSummaryMetrics`.
+  - **Admin Service Layer**: Implemented `adminService` (`lib/services/admin.service.ts`) with methods `getUsers()`, `updateUserRoles()`, and `updateUserSubscription()`.
+  - **Modular Atelier Admin Components** (`components/admin/`):
+    - `AdminSidebar.tsx`: Dedicated admin sidebar with active path detection, system badge, and couple workspace switcher.
+    - `AdminHeader.tsx`: Top bar with live connection pill, data refresh action, and sidebar drawer toggle.
+    - `AdminMetricsCards.tsx`: Metric summary cards for Total Pengguna, Administrator, Berlangganan Aktif, and Member VIP Atelier.
+    - `UserManagementTable.tsx`: Full-featured data table with live search by name/email, role filtering, tier filtering, pagination, and action triggers.
+    - `EditRoleModal.tsx`: Idiomatic modal with self-demotion protection and instant role toggles.
+    - `EditSubscriptionModal.tsx`: Modal for upgrading/downgrading tiers with ISO 8601 date synchronization.
+  - **Admin Route Orchestrator**: Replaced placeholder in `app/admin/page.tsx` with full state management, optimistic updates, and reactive refresh.
+  - **Verification**: 0 ESLint warnings/errors, strict TypeScript compilation (`tsc --noEmit`), and 25/25 passing unit tests.
+
+
+- Implemented **Phase 7: Structured Theming Architecture & Landing Page Refactoring**:
+  - Created theme contracts in `types/theme.ts` (`ThemeConfig`, `ThemeColors`, `ThemeAssets`, `ThemeFeatureItem`) decoupling colors and asset content from presentation.
+  - Implemented the default theme preset `Éternel Atelier Luxury` in `lib/theme/themes/eternel-atelier.ts` and theme registry in `lib/theme/index.ts`.
+  - Decomposed the landing page into reusable components under `components/landing/`:
+    - `LandingNavbar.tsx`: Responsive navigation with session awareness (shows "Masuk" & "Daftar" if guest, or "Buka Dashboard" if authenticated) and dynamic theme logo.
+    - `LandingHero.tsx`: Typography Cormorant Garamond, value proposition, and interactive wedding workspace mockup.
+    - `LandingFeatures.tsx`: Modular feature grid rendering items and badges dynamically from the theme config.
+    - `LandingCTA.tsx`: Champagne luxury call-to-action banner for new couple signups.
+    - `LandingFooter.tsx`: Standardized brand footer matching atelier aesthetics.
+  - Rewrote `app/page.tsx` into a concise orchestrator (<25 lines) replacing all legacy hardcoded rose/pink classes.
+  - Verified with 0 ESLint errors/warnings, strict TypeScript check, and 25/25 unit tests passing.
+
 - Implemented **Part 2: User Dashboard Real Backend API Integration (Profile & Couple Partner)**:
   - Added TypeScript contracts in `types/couple.ts` (`CoupleLink`, `CoupleInvitationList`, `CoupleLinkStatus`) and extended `types/auth.ts` (`UserSummary`, `UpdateProfilePayload`, `partner`).
   - Added `coupleService` (`lib/services/couple.service.ts`) covering `GET /api/couples/me`, `DELETE /api/couples/me`, `GET /api/couples/invitations`, `POST /api/couples/invitations`, `POST /api/couples/invitations/{id}/accept`, `POST /api/couples/invitations/{id}/reject`, and `DELETE /api/couples/invitations/{id}`.

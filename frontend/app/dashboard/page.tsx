@@ -6,6 +6,7 @@ import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
 import { CountdownBanner } from '@/components/dashboard/CountdownBanner';
 import { CoupleStatusBanner } from '@/components/dashboard/CoupleStatusBanner';
 import { CouplePartnerModal } from '@/components/dashboard/CouplePartnerModal';
+import { AccountSecurityModal } from '@/components/dashboard/AccountSecurityModal';
 import { StatsCards } from '@/components/dashboard/StatsCards';
 import { RecentGuestsTable } from '@/components/dashboard/RecentGuestsTable';
 import { BudgetOverviewCard } from '@/components/dashboard/BudgetOverviewCard';
@@ -37,6 +38,7 @@ function getShortPersonName(person?: UserSummary | null): string | null {
 export default function DashboardPage() {
   const [activeTab, setActiveTab] = useState('overview');
   const [isCoupleModalOpen, setIsCoupleModalOpen] = useState(false);
+  const [isSecurityModalOpen, setIsSecurityModalOpen] = useState(false);
 
   const { user: profile } = useSession();
   const coupleState = useCouple();
@@ -61,12 +63,16 @@ export default function DashboardPage() {
     : profile?.partner ?? null;
 
   // Sinkronisasi nama mempelai dari data profil & pasangan asli jika tersedia
+  // Untuk Admin tanpa pasangan aktif, pertahankan nama pasangan workspace contoh agar tampilan tetap proporsional
   const userDisplayName = getShortPersonName(profile);
   const partnerDisplayName = getShortPersonName(partner);
+  const shouldUseMockCoupleNames = coupleState.isAdmin && !partner;
 
   const activeWedding: WeddingSummary = {
     ...mockWedding,
-    brideName: userDisplayName || mockWedding.brideName,
+    brideName: shouldUseMockCoupleNames
+      ? mockWedding.brideName
+      : userDisplayName || mockWedding.brideName,
     groomName: partnerDisplayName || mockWedding.groomName,
     title:
       userDisplayName && partnerDisplayName
@@ -117,6 +123,7 @@ export default function DashboardPage() {
         totalEvents={events.length}
         checklistProgress={checklistProgress}
         onOpenCoupleModal={() => setIsCoupleModalOpen(true)}
+        onOpenSecurityModal={() => setIsSecurityModalOpen(true)}
       />
 
       {/* 2. Right Main Application Area */}
@@ -282,6 +289,13 @@ export default function DashboardPage() {
         onReject={coupleState.rejectInvitation}
         onCancel={coupleState.cancelInvitation}
         onUnlink={coupleState.unlinkCouple}
+      />
+
+      {/* Modal Keamanan Akun & Sesi */}
+      <AccountSecurityModal
+        open={isSecurityModalOpen}
+        onClose={() => setIsSecurityModalOpen(false)}
+        userEmail={profile?.email}
       />
     </SidebarProvider>
   );

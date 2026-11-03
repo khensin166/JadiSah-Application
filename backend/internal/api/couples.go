@@ -205,15 +205,32 @@ func (s *Server) GetMyCouple(c *gin.Context) {
 		return
 	}
 
-	var link models.CoupleLink
+	var coupleLinks []models.CoupleLink
 	if err := s.db.Preload("Requester").Preload("Partner").
 		Where("(requester_id = ? OR partner_id = ?) AND status = ?", userID, userID, models.Accepted).
-		First(&link).Error; err != nil {
+		Limit(1).
+		Find(&coupleLinks).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, apigen.Error{Message: "failed to retrieve couple link"})
+		return
+	}
+
+	if len(coupleLinks) == 0 {
+		// Exception for ADMIN and SUPER_ADMIN: do not return 404 "no active couple link"
+		var adminCount int64
+		s.db.Table("user_roles").
+			Joins("JOIN roles ON roles.id = user_roles.role_id").
+			Where("user_roles.user_id = ? AND roles.name IN ?", userID, []string{"ADMIN", "SUPER_ADMIN"}).
+			Count(&adminCount)
+		if adminCount > 0 {
+			c.Status(http.StatusNoContent)
+			return
+		}
+
 		c.JSON(http.StatusNotFound, apigen.NotFound{Message: "no active couple link"})
 		return
 	}
 
-	c.JSON(http.StatusOK, mapCoupleLinkToAPI(link))
+	c.JSON(http.StatusOK, mapCoupleLinkToAPI(coupleLinks[0]))
 }
 
 func (s *Server) UnlinkMyCouple(c *gin.Context) {
@@ -222,12 +239,20 @@ func (s *Server) UnlinkMyCouple(c *gin.Context) {
 		return
 	}
 
-	var link models.CoupleLink
-	if err := s.db.Where("(requester_id = ? OR partner_id = ?) AND status = ?", userID, userID, models.Accepted).First(&link).Error; err != nil {
+	var coupleLinks []models.CoupleLink
+	if err := s.db.Where("(requester_id = ? OR partner_id = ?) AND status = ?", userID, userID, models.Accepted).
+		Limit(1).
+		Find(&coupleLinks).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, apigen.Error{Message: "failed to retrieve couple link"})
+		return
+	}
+
+	if len(coupleLinks) == 0 {
 		c.JSON(http.StatusNotFound, apigen.NotFound{Message: "no active couple link"})
 		return
 	}
 
+	link := coupleLinks[0]
 	now := time.Now()
 	link.Status = models.Unlinked // Added state for unlinked couples
 	link.RespondedAt = &now

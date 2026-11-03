@@ -39,15 +39,18 @@ func (s *Server) GetMyProfile(c *gin.Context) {
 	}
 
 	// 4. Fetch Partner information (if any)
-	var coupleLink models.CoupleLink
 	partnerInfo := (*apigen.UserSummary)(nil)
+	var coupleLinks []models.CoupleLink
 
 	// Query ACCEPTED links where user is either requester or partner
+	// Using Limit(1).Find avoids noisy "record not found" log when user has no partner yet
 	err := s.db.Preload("Requester").Preload("Partner").
 		Where("(requester_id = ? OR partner_id = ?) AND status = ?", user.ID, user.ID, models.Accepted).
-		First(&coupleLink).Error
+		Limit(1).
+		Find(&coupleLinks).Error
 
-	if err == nil { // Found a partner
+	if err == nil && len(coupleLinks) > 0 { // Found a partner
+		coupleLink := coupleLinks[0]
 		var partner models.User
 		if coupleLink.RequesterID == user.ID {
 			partner = coupleLink.Partner

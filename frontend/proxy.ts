@@ -9,7 +9,7 @@ import { NextResponse, type NextRequest } from "next/server";
  */
 const SESSION_COOKIE = "limen_session";
 const PROTECTED_PREFIXES = ["/dashboard", "/admin"];
-const GUEST_ONLY = ["/login", "/register"];
+const GUEST_ONLY = ["/login", "/register", "/forgot-password", "/reset-password"];
 
 export function proxy(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
@@ -30,5 +30,12 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/admin/:path*", "/login", "/register"],
+  matcher: [
+    "/dashboard/:path*",
+    "/admin/:path*",
+    "/login",
+    "/register",
+    "/forgot-password",
+    "/reset-password",
+  ],
 };

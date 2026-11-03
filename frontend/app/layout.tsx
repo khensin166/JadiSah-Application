@@ -29,8 +29,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html
       lang="id"
       className={cn("h-full", "antialiased", cormorant.variable, jakarta.variable, "font-sans", geist.variable)}
+      suppressHydrationWarning
     >
-      <body className="min-h-full flex flex-col font-sans bg-[#FAF6EE] text-[#242321]">
+      <body className="min-h-full flex flex-col font-sans bg-[#FAF6EE] text-[#242321]" suppressHydrationWarning>
         <AuthProvider>{children}</AuthProvider>
       </body>
     </html>

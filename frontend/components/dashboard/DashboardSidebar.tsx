@@ -13,10 +13,14 @@ import {
   ChevronsUpDown,
   ExternalLink,
   ChevronRight,
+  ShieldCheck,
+  Shield,
+  Heart,
 } from "lucide-react";
 import { UserSession, WeddingSummary } from "@/types/dashboard";
 import { calculateDaysRemaining } from "@/lib/dashboard-utils";
 import { useAuth } from "@/hooks/use-auth";
+import { useSession } from "@/context/auth-context";
 
 import {
   Sidebar,
@@ -49,6 +53,7 @@ interface DashboardSidebarProps {
   totalEvents?: number;
   checklistProgress?: string;
   onOpenCoupleModal?: () => void;
+  onOpenSecurityModal?: () => void;
 }
 
 export function DashboardSidebar({
@@ -59,9 +64,13 @@ export function DashboardSidebar({
   totalEvents = 3,
   checklistProgress = "2/5",
   onOpenCoupleModal,
+  onOpenSecurityModal,
   ...props
 }: DashboardSidebarProps & React.ComponentProps<typeof Sidebar>) {
   const { logout } = useAuth();
+  const { hasRole } = useSession();
+  const isSuperAdmin = hasRole("SUPER_ADMIN");
+  const isAdmin = isSuperAdmin || hasRole("ADMIN");
   const daysRemaining = calculateDaysRemaining(wedding.weddingDate);
 
   const mainNavItems = [
@@ -129,7 +138,7 @@ export function DashboardSidebar({
               Atelier Pernikahan
             </span>
             <span className="rounded-full border border-champagne-light bg-white px-2 py-0.5 text-[9px] font-medium text-charcoal-700">
-              owner
+              {isSuperAdmin ? "super_admin" : isAdmin ? "admin" : "owner"}
             </span>
           </div>
           <h3 className="font-cormorant text-lg font-bold text-charcoal-900 leading-tight">
@@ -205,6 +214,32 @@ export function DashboardSidebar({
                   <ChevronRight className="ml-auto size-4 text-charcoal-400 group-data-[collapsible=icon]:hidden" />
                 </SidebarMenuButton>
               </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  tooltip="Keamanan Akun"
+                  onClick={onOpenSecurityModal}
+                  className="relative h-10 rounded-lg px-3 text-sm text-charcoal-700 transition-all duration-200 hover:bg-champagne/15 hover:text-charcoal-900"
+                >
+                  <ShieldCheck className="size-4" />
+                  <span>Keamanan Akun</span>
+                  <ChevronRight className="ml-auto size-4 text-charcoal-400 group-data-[collapsible=icon]:hidden" />
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              {isAdmin && (
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    asChild
+                    tooltip="Admin Console"
+                    className="relative h-10 rounded-lg px-3 text-sm font-semibold text-charcoal-900 bg-champagne-soft/60 transition-all duration-200 hover:bg-champagne/25"
+                  >
+                    <Link href="/admin">
+                      <Shield className="size-4 text-champagne-dark" />
+                      <span>Admin Console</span>
+                      <ChevronRight className="ml-auto size-4 text-charcoal-500 group-data-[collapsible=icon]:hidden" />
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              )}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
@@ -215,7 +250,6 @@ export function DashboardSidebar({
           <DropdownMenuTrigger asChild>
             <SidebarMenuButton
               size="lg"
-              tooltip={user.fullName}
               className="h-auto w-full rounded-xl border border-champagne-light/60 bg-white/60 px-3 py-2.5 text-charcoal-800 shadow-xs transition-all hover:border-champagne hover:bg-white data-[state=open]:border-champagne data-[state=open]:bg-white group-data-[collapsible=icon]:border-transparent group-data-[collapsible=icon]:bg-transparent group-data-[collapsible=icon]:shadow-none"
             >
               <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-champagne to-champagne-dark font-cormorant text-base font-bold text-white group-data-[collapsible=icon]:size-8">
@@ -226,19 +260,37 @@ export function DashboardSidebar({
                   {user.fullName}
                 </span>
                 <span className="w-full truncate text-xs leading-tight text-champagne-dark">
-                  H - {daysRemaining} Hari
+                  {isSuperAdmin ? "Super Administrator" : isAdmin ? "Administrator" : `H - ${daysRemaining} Hari`}
                 </span>
               </div>
               <ChevronsUpDown className="ml-auto size-4 shrink-0 text-charcoal-500 group-data-[collapsible=icon]:hidden" />
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent side="top" align="start" sideOffset={8} className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-xl border-champagne-light bg-ivory-50">
+            {isAdmin && (
+              <>
+                <DropdownMenuItem asChild className="hover:bg-champagne/20 cursor-pointer text-charcoal-900 font-semibold">
+                  <Link href="/admin">
+                    <Shield className="mr-2 size-4 text-champagne-dark" />
+                    <span>Buka Admin Console</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator className="bg-champagne-light/50" />
+              </>
+            )}
             <DropdownMenuItem
               onClick={onOpenCoupleModal}
               className="hover:bg-champagne/20 cursor-pointer text-charcoal-800"
             >
-              <Settings className="mr-2 size-4" />
-              <span>Pasangan &amp; Profil</span>
+              <Heart className="mr-2 size-4 text-champagne-dark" />
+              <span>{isAdmin ? "Config Pasangan & Profil" : "Pasangan & Profil"}</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={onOpenSecurityModal}
+              className="hover:bg-champagne/20 cursor-pointer text-charcoal-800"
+            >
+              <ShieldCheck className="mr-2 size-4 text-champagne-dark" />
+              <span>Keamanan &amp; Sandi</span>
             </DropdownMenuItem>
             <DropdownMenuSeparator className="bg-champagne-light/50" />
             <DropdownMenuItem 
